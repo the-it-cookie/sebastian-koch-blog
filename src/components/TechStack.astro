@@ -46,8 +46,8 @@ const stack = [
 		margin: 0 0 1em 0;
 	}
 	ul {
-		display: flex;
-		flex-wrap: wrap;
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
 		gap: 1.5em;
 		list-style: none;
 		margin: 0;
@@ -58,7 +58,11 @@ const stack = [
 		flex-direction: column;
 		align-items: center;
 		gap: 0.6em;
-		width: 96px;
+	}
+	@media (max-width: 480px) {
+		ul {
+			grid-template-columns: repeat(2, 1fr);
+		}
 	}
 	.logo-tile {
 		width: 72px;
