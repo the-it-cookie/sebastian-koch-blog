@@ -1,0 +1,86 @@
+---
+import { Image } from 'astro:assets';
+import cij from '../assets/logos/cij.png';
+import copilotStudio from '../assets/logos/copilot-studio.jpg';
+import dataverse from '../assets/logos/dataverse.png';
+import powerApps from '../assets/logos/powerapps.jpg';
+import powerAutomate from '../assets/logos/powerautomate.jpg';
+import powerPlatform from '../assets/logos/powerplatform.jpg';
+
+const stack = [
+	{ name: 'Power Platform', logo: powerPlatform },
+	{ name: 'Power Apps', logo: powerApps },
+	{ name: 'Power Automate', logo: powerAutomate },
+	{ name: 'Dataverse', logo: dataverse },
+	{ name: 'Copilot Studio', logo: copilotStudio },
+	{ name: 'Customer Insights - Journeys', logo: cij },
+];
+---
+
+<section class="tech-stack">
+	<p class="tech-stack-label">// the stack i work in</p>
+	<ul>
+		{
+			stack.map((item) => (
+				<li>
+					<div class="logo-tile">
+						<Image src={item.logo} alt={`${item.name} logo`} width={96} height={96} />
+					</div>
+					<span>{item.name}</span>
+				</li>
+			))
+		}
+	</ul>
+</section>
+
+<style>
+	.tech-stack {
+		margin: 2em 0;
+	}
+	.tech-stack-label {
+		font-family: var(--font-mono);
+		font-size: 0.8em;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--accent);
+		margin: 0 0 1em 0;
+	}
+	ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.5em;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	li {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.6em;
+		width: 96px;
+	}
+	.logo-tile {
+		width: 72px;
+		height: 72px;
+		background: #fff;
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 12px;
+	}
+	.logo-tile :global(img) {
+		width: 100%;
+		height: 100%;
+		object-fit: contain;
+		border-radius: 0;
+	}
+	li span {
+		font-family: var(--font-mono);
+		font-size: 0.75em;
+		text-align: center;
+		color: rgb(var(--gray-dark));
+	}
+</style>

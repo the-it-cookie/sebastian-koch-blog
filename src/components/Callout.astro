@@ -1,0 +1,19 @@
+---
+interface Props {
+	type?: 'ingredients' | 'steps' | 'warning';
+	title?: string;
+}
+
+const { type = 'steps', title } = Astro.props;
+
+const defaultTitles = {
+	ingredients: 'Ingredients',
+	steps: 'Steps',
+	warning: 'Watch out',
+};
+---
+
+<div class={`callout callout-${type}`}>
+	<p class="callout-title">{title ?? defaultTitles[type]}</p>
+	<slot />
+</div>

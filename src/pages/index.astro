@@ -31,34 +31,21 @@ const latestPosts = allPosts
 			}
 			.hero p.tagline {
 				margin: 0.8em 0 0 0;
-				font-style: italic;
-				color: rgb(var(--gray));
+				font-family: var(--font-mono);
+				font-size: 0.95em;
+				color: var(--accent);
 			}
 			h2.section-title {
-				border-bottom: 1px solid rgb(var(--gray-light));
+				border-bottom: 1px solid var(--border);
 				padding-bottom: 0.3em;
 			}
 			ul {
 				list-style-type: none;
 				margin: 0;
 				padding: 0;
-			}
-			li {
-				margin-bottom: 2em;
-			}
-			li a {
-				text-decoration: none;
-			}
-			li a:hover .title {
-				color: var(--accent);
-			}
-			.title {
-				margin: 0 0 0.2em 0;
-				color: rgb(var(--black));
-			}
-			.description {
-				margin: 0.3em 0 0 0;
-				color: rgb(var(--gray-dark));
+				display: flex;
+				flex-direction: column;
+				gap: 1.25em;
 			}
 		</style>
 	</head>
@@ -71,12 +58,12 @@ const latestPosts = allPosts
 				<p class="tagline">{SITE_TAGLINE}</p>
 			</section>
 			<section>
-				<h2 class="section-title">Latest articles</h2>
+				<h2 class="section-title">Fresh from the kitchen</h2>
 				<ul>
 					{
 						latestPosts.map((post) => (
 							<li>
-								<a href={`/blog/${post.id}/`}>
+								<a class="card" href={`/blog/${post.id}/`}>
 									<h3 class="title">{post.data.title}</h3>
 									<p class="meta">
 										<FormattedDate date={post.data.pubDate} />

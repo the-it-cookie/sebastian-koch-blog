@@ -25,24 +25,9 @@ const posts = allPosts
 				list-style-type: none;
 				margin: 0;
 				padding: 0;
-			}
-			li {
-				margin-bottom: 2.5em;
-			}
-			li a {
-				text-decoration: none;
-			}
-			li a:hover .title {
-				color: var(--accent);
-			}
-			.title {
-				margin: 0 0 0.2em 0;
-				color: rgb(var(--black));
-				line-height: 1.2;
-			}
-			.description {
-				margin: 0.3em 0;
-				color: rgb(var(--gray-dark));
+				display: flex;
+				flex-direction: column;
+				gap: 1.25em;
 			}
 			.draft-badge {
 				display: inline-block;
@@ -51,7 +36,8 @@ const posts = allPosts
 				border-radius: 4px;
 				background: rgb(var(--gray-light));
 				color: rgb(var(--gray-dark));
-				font-size: 0.7em;
+				font-family: var(--font-mono);
+				font-size: 0.6em;
 				text-transform: uppercase;
 				vertical-align: middle;
 			}
@@ -65,7 +51,7 @@ const posts = allPosts
 					{
 						posts.map((post) => (
 							<li>
-								<a href={`/blog/${post.id}/`}>
+								<a class="card" href={`/blog/${post.id}/`}>
 									<h2 class="title">
 										{post.data.title}
 										{post.data.draft && <span class="draft-badge">Draft</span>}
