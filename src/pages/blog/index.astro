@@ -1,88 +1,59 @@
 ---
-import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import Footer from '../../components/Footer.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { SITE_TITLE } from '../../consts';
+import { getReadingTime } from '../../utils/readingTime';
 
-const posts = (await getCollection('blog')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const allPosts = await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft);
+const posts = allPosts
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+	.map((post) => ({ ...post, readingTime: getReadingTime(post.body ?? '') }));
 ---
 
 <!doctype html>
 <html lang="en">
 	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+		<BaseHead title={`Blog | ${SITE_TITLE}`} description="Articles on Power Platform, Dynamics 365, AI and GDPR-compliant consent architecture." />
 		<style>
 			main {
-				width: 960px;
+				width: 720px;
 			}
 			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
 				list-style-type: none;
 				margin: 0;
 				padding: 0;
 			}
-			ul li {
-				width: calc(50% - 1rem);
+			li {
+				margin-bottom: 2.5em;
 			}
-			ul li * {
+			li a {
 				text-decoration: none;
-				transition: 0.2s ease;
 			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
+			li a:hover .title {
+				color: var(--accent);
 			}
 			.title {
-				margin: 0;
+				margin: 0 0 0.2em 0;
 				color: rgb(var(--black));
-				line-height: 1;
+				line-height: 1.2;
 			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
+			.description {
+				margin: 0.3em 0;
+				color: rgb(var(--gray-dark));
 			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
+			.draft-badge {
+				display: inline-block;
+				margin-left: 0.5em;
+				padding: 0.1em 0.5em;
+				border-radius: 4px;
+				background: rgb(var(--gray-light));
+				color: rgb(var(--gray-dark));
+				font-size: 0.7em;
+				text-transform: uppercase;
+				vertical-align: middle;
 			}
 		</style>
 	</head>
@@ -95,13 +66,22 @@ const posts = (await getCollection('blog')).sort(
 						posts.map((post) => (
 							<li>
 								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
-										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
+									<h2 class="title">
+										{post.data.title}
+										{post.data.draft && <span class="draft-badge">Draft</span>}
+									</h2>
+									<p class="meta">
+										<FormattedDate date={post.data.pubDate} /> &middot; {post.readingTime} min
+										read
 									</p>
+									<p class="description">{post.data.description}</p>
+									{post.data.tags.length > 0 && (
+										<ul class="tag-list">
+											{post.data.tags.map((tag) => (
+												<li>{tag}</li>
+											))}
+										</ul>
+									)}
 								</a>
 							</li>
 						))
