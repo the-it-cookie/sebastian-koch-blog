@@ -9,5 +9,4 @@ export const AUTHOR_NAME = 'Sebastian Koch';
 export const AUTHOR_POSITIONING = 'CRM and Power Platform Consultant at CONSOS GmbH';
 export const SITE_TAGLINE = 'Digitization is tactical, transformation is strategic.';
 
-// TODO: replace with your real LinkedIn profile URL.
-export const LINKEDIN_URL = '#';
+export const LINKEDIN_URL = 'https://www.linkedin.com/in/sebastian-koch-ba161a160/';
