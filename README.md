@@ -68,24 +68,31 @@ Two placeholders need real values:
 2. `LINKEDIN_URL` in `src/consts.ts` — currently `#`. Set it to your LinkedIn
    profile URL; it's used in the header and footer.
 
-## Deploying to Cloudflare Pages
+## Deploying to Cloudflare
+
+Cloudflare now serves static sites through the unified Workers platform
+(static assets), configured via `wrangler.jsonc` in the repo root:
+
+```jsonc
+{
+	"name": "sebastian-koch-blog",
+	"compatibility_date": "2026-07-17",
+	"assets": {
+		"directory": "./dist"
+	}
+}
+```
+
+No `main` entry is needed — this is a pure static-assets deployment, no
+Worker script involved.
 
 1. Push this repository to GitHub.
-2. In the Cloudflare dashboard: **Workers & Pages → Create → Pages → Connect
-   to Git**, and select the repository.
+2. In the Cloudflare dashboard: **Compute (Workers) → Create application →
+   Import a repository**, and select this repo.
 3. Build settings:
-   - Framework preset: `Astro`
    - Build command: `npm run build`
-   - Build output directory: `dist`
-4. Cloudflare's default Node version may be older than this project expects
-   (Node 22+). If the build fails on the Node version, add an environment
-   variable `NODE_VERSION` set to `22` (or newer) in the Pages project's
-   settings.
-5. Deploy. Cloudflare gives you a free `*.pages.dev` subdomain immediately;
-   attach your own domain later under the project's **Custom domains** tab.
-6. Update `site` in `astro.config.mjs` to match whichever URL is live
-   (`*.pages.dev` or your custom domain) and redeploy, so canonical URLs,
-   sitemap, and RSS point at the real site.
-
-No `wrangler.toml` is required for this flow — Cloudflare Pages builds and
-deploys straight from the Git integration.
+   - Deploy command: `npx wrangler deploy` (default — reads `wrangler.jsonc`)
+4. Deploy. Cloudflare gives you a free `*.workers.dev` subdomain immediately;
+   attach your own domain later under the project's custom domains settings.
+5. Update `site` in `astro.config.mjs` to match whichever URL is live and
+   redeploy, so canonical URLs, sitemap, and RSS point at the real site.
