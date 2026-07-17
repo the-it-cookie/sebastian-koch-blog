@@ -1,23 +1,19 @@
 ---
 title: 'Why this site is called a cookbook'
-description: 'An introduction: who I am, what I work on, and why I call this site a cookbook instead of a blog.'
+description: 'Why I call this a cookbook instead of a blog, and what kind of recipes you will find here.'
 pubDate: 2026-07-17
-tags: []
+tags: ['Introduction']
 draft: false
 ---
 
-My last name is Koch. In German, that is simply the word for cook. Translate it, and Sebastian Koch becomes Sebastian Cook, which is exactly where the name of this site comes from.
+Let me get the pun out of the way first. My surname is Koch, which is simply the German word for cook. Translate it and you get Sebastian Cook, which is how this site got its name.
 
-The kitchen metaphor stuck around, because it fits the work better than I expected: figure something out once, test it properly, then write down the recipe so the next person can follow it without the detours.
+But the name is only half the reason I call it a cookbook. The other half is about what I want the writing to be.
 
-I am Sebastian, an industrial engineer by training and a consultant by trade, based in Munich. I studied Wirtschaftsingenieurwesen in Bayreuth, which is a long German word for someone taught to sit between engineering and business and translate one into the other. That is still what I do most days.
+A lot of technical blogs are someone thinking out loud. Useful, but you often cannot tell what actually worked from what the author only hoped would work. A cookbook is different. A recipe is something that has been made, tasted, and written down so the next person can reproduce it without the guesswork. That is the bar I want to hold here. If a post describes a solution, it is because I built it and it held up in production, not because it sounded good in theory.
 
-I am, happily, a bit of a generalist. Jack of all trades, master of none, but as the rest of that saying goes, oftentimes better than a master of one. In a given week I might sketch a solution architecture, wire up a Power Automate flow, write a plugin or a piece of form JavaScript, untangle a consent model, and then stand at a whiteboard arguing about strategy. I like the range. The common thread is that I look at the whole process, not just the screen in front of me.
+So here is what a recipe on this site looks like. A real problem from a real project, stripped of client details. The approach I took, and why. The parts where it tends to burn, meaning the gotchas that cost me hours. And ideally something you can lift straight into your own work.
 
-My home base is the Microsoft Power Platform and Dynamics 365, from model-driven apps and Dataverse to Copilot Studio. Where I currently go deepest is marketing automation with Customer Insights - Journeys: consent, double opt-in, real-time journeys, and the custom tables, plugins and flows that make it hold up in production and under GDPR. Depth where it counts, on a base that stays broad.
+The menu leans toward the Microsoft Power Platform and Dynamics 365: solution patterns, consent and GDPR done properly, and AI with Copilot without cutting corners on data protection. Some recipes are full deep dives, some are quick notes for a single sharp problem. I would rather show range than pretend I only ever cook one dish.
 
-Before consulting I spent a lot of time in student initiatives and case competitions, including winning the finals of Germany's largest student case study competition with my team. That taught me two things no certification does: how to think under pressure, and that the best solutions get argued out with good people, not handed down.
-
-This site is my cookbook. Recipes from real projects: practical Power Platform and Dynamics 365 patterns, the consent and compliance details most people skip, how I put AI to work without cutting corners on data protection, and the traps that cost me hours so they cost you less. Some posts are deep dives, some are quick notes. All of them come from something I actually had to solve.
-
-Wirtschaftsingenieur by training, consultant at CONSOS GmbH by trade, generalist by nature. Digitization is tactical, transformation is strategic.
+That is the whole idea. Pull up a chair. The first proper recipes are already in the oven.
