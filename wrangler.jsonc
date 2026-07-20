@@ -1,7 +1,16 @@
 {
 	"name": "sebastian-koch-blog",
 	"compatibility_date": "2026-07-17",
+	"main": "worker/index.js",
 	"assets": {
-		"directory": "./dist"
-	}
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "sebastian-koch-blog-comments",
+			"database_id": "5436215e-f51e-464e-8714-ceda93f5609a"
+		}
+	]
 }

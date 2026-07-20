@@ -10,3 +10,7 @@ export const AUTHOR_POSITIONING = 'CRM and Power Platform Consultant at CONSOS G
 export const SITE_TAGLINE = 'Digitization is tactical, transformation is strategic.';
 
 export const LINKEDIN_URL = 'https://www.linkedin.com/in/sebastian-koch-ba161a160/';
+
+// Public Turnstile site key (safe to expose client-side; verification uses
+// the private secret key stored as a Worker secret).
+export const TURNSTILE_SITE_KEY = '0x4AAAAAAD5u6Q3uRZ9kAfeu';

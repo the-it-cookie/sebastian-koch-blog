@@ -1,0 +1,170 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import { SITE_TITLE } from '../../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Comment moderation | ${SITE_TITLE}`} description="Private moderation queue." />
+		<meta name="robots" content="noindex, nofollow" />
+	</head>
+	<body>
+		<main class="admin">
+			<h1>Pending comments</h1>
+			<div id="auth-gate">
+				<label for="secret-input">Admin secret</label>
+				<input type="password" id="secret-input" autocomplete="off" />
+				<button id="secret-save">Save</button>
+			</div>
+			<p id="status-message" class="meta"></p>
+			<ul id="comment-list"></ul>
+		</main>
+	</body>
+</html>
+
+<style>
+	.admin {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: auto;
+		padding: 3em 1em;
+	}
+	#auth-gate {
+		display: flex;
+		gap: 0.5em;
+		align-items: center;
+		margin-bottom: 1.5em;
+	}
+	#auth-gate input {
+		flex: 1;
+		padding: 0.5em;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		font-family: var(--font-mono);
+	}
+	#auth-gate button,
+	.comment-actions button {
+		font-family: var(--font-mono);
+		font-size: 0.85em;
+		padding: 0.4em 0.9em;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--surface);
+		color: rgb(var(--gray-dark));
+		cursor: pointer;
+	}
+	.comment-actions button:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+	#comment-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 1em;
+	}
+	.comment-item {
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 1em 1.25em;
+		background: var(--surface);
+	}
+	.comment-item .comment-meta {
+		font-family: var(--font-mono);
+		font-size: 0.8em;
+		color: rgb(var(--gray));
+		margin-bottom: 0.5em;
+	}
+	.comment-item .comment-body {
+		white-space: pre-wrap;
+		margin: 0 0 0.75em 0;
+	}
+	.comment-actions {
+		display: flex;
+		gap: 0.5em;
+	}
+</style>
+
+<script>
+	const STORAGE_KEY = 'blog-admin-secret';
+	const secretInput = document.getElementById('secret-input') as HTMLInputElement;
+	const statusMessage = document.getElementById('status-message') as HTMLParagraphElement;
+	const commentList = document.getElementById('comment-list') as HTMLUListElement;
+
+	const stored = localStorage.getItem(STORAGE_KEY);
+	if (stored) secretInput.value = stored;
+
+	function getSecret() {
+		return localStorage.getItem(STORAGE_KEY) ?? '';
+	}
+
+	async function loadComments() {
+		const secret = getSecret();
+		if (!secret) {
+			statusMessage.textContent = 'Enter your admin secret above to load the queue.';
+			return;
+		}
+		statusMessage.textContent = 'Loading...';
+		const res = await fetch('/api/admin/comments', {
+			headers: { Authorization: `Bearer ${secret}` },
+		});
+		if (res.status === 401) {
+			statusMessage.textContent = 'Wrong secret.';
+			commentList.innerHTML = '';
+			return;
+		}
+		const data = await res.json();
+		commentList.innerHTML = '';
+		if (data.comments.length === 0) {
+			statusMessage.textContent = 'Nothing pending. All caught up.';
+			return;
+		}
+		statusMessage.textContent = `${data.comments.length} pending`;
+		for (const comment of data.comments) {
+			const li = document.createElement('li');
+			li.className = 'comment-item';
+
+			const meta = document.createElement('div');
+			meta.className = 'comment-meta';
+			meta.textContent = `${comment.authorName} · ${comment.postSlug}${comment.parentId ? ` · reply to #${comment.parentId}` : ''} · ${comment.createdAt}`;
+
+			const body = document.createElement('p');
+			body.className = 'comment-body';
+			body.textContent = comment.body;
+
+			const actions = document.createElement('div');
+			actions.className = 'comment-actions';
+
+			const approveBtn = document.createElement('button');
+			approveBtn.textContent = 'Approve';
+			approveBtn.addEventListener('click', () => moderate(comment.id, 'approve'));
+
+			const rejectBtn = document.createElement('button');
+			rejectBtn.textContent = 'Reject';
+			rejectBtn.addEventListener('click', () => moderate(comment.id, 'reject'));
+
+			actions.append(approveBtn, rejectBtn);
+			li.append(meta, body, actions);
+			commentList.append(li);
+		}
+	}
+
+	async function moderate(id: number, action: 'approve' | 'reject') {
+		const secret = getSecret();
+		await fetch(`/api/admin/comments/${id}/${action}`, {
+			method: 'POST',
+			headers: { Authorization: `Bearer ${secret}` },
+		});
+		loadComments();
+	}
+
+	document.getElementById('secret-save')?.addEventListener('click', () => {
+		localStorage.setItem(STORAGE_KEY, secretInput.value.trim());
+		loadComments();
+	});
+
+	loadComments();
+</script>

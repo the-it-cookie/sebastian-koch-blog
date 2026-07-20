@@ -1,0 +1,277 @@
+---
+import { TURNSTILE_SITE_KEY } from '../consts';
+
+interface Props {
+	slug: string;
+}
+
+const { slug } = Astro.props;
+---
+
+<section class="comments" id="comments" data-slug={slug}>
+	<h2>Comments</h2>
+	<p id="comments-status" class="meta">Loading comments…</p>
+	<ul id="comments-list" class="comment-thread"></ul>
+
+	<form id="comment-form">
+		<p id="reply-context" hidden>
+			Replying to <strong id="reply-context-name"></strong>
+			<button type="button" id="cancel-reply">Cancel</button>
+		</p>
+		<input type="hidden" id="parent-id" name="parentId" value="" />
+		<label for="comment-name">Name</label>
+		<input id="comment-name" name="name" required maxlength="80" autocomplete="name" />
+		<label for="comment-body">Comment</label>
+		<textarea id="comment-body" name="body" required maxlength="2000" rows="4"></textarea>
+		<div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
+		<button type="submit">Post comment</button>
+		<p id="form-message" class="meta"></p>
+	</form>
+</section>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
+<style>
+	.comments {
+		margin-top: 3em;
+		padding-top: 2em;
+		border-top: 1px solid var(--border);
+	}
+	.comment-thread {
+		list-style: none;
+		margin: 1em 0 2em 0;
+		padding: 0;
+	}
+	.comment-thread .comment-thread {
+		margin: 1em 0 0 1.5em;
+	}
+	.comment {
+		border: 1px solid var(--border);
+		background: var(--surface);
+		border-radius: 10px;
+		padding: 1em 1.25em;
+		margin-bottom: 1em;
+	}
+	.comment .comment-meta {
+		font-family: var(--font-mono);
+		font-size: 0.8em;
+		color: rgb(var(--gray));
+		margin-bottom: 0.4em;
+	}
+	.comment .comment-body {
+		margin: 0 0 0.5em 0;
+		white-space: pre-wrap;
+	}
+	.comment .reply-link {
+		font-family: var(--font-mono);
+		font-size: 0.8em;
+		background: none;
+		border: none;
+		color: var(--accent);
+		cursor: pointer;
+		padding: 0;
+	}
+	.comment .reply-link:hover {
+		color: var(--accent-dark);
+	}
+	#comment-form {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5em;
+		max-width: 480px;
+	}
+	#comment-form label {
+		font-family: var(--font-mono);
+		font-size: 0.8em;
+		color: rgb(var(--gray));
+	}
+	#comment-form input,
+	#comment-form textarea {
+		font-family: var(--font-sans);
+		font-size: 1em;
+		padding: 0.5em;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		background: var(--surface);
+		color: rgb(var(--gray-dark));
+	}
+	#comment-form button[type='submit'] {
+		align-self: flex-start;
+		font-family: var(--font-mono);
+		padding: 0.5em 1.25em;
+		border-radius: 6px;
+		border: 1px solid var(--accent);
+		background: var(--accent);
+		color: #fff;
+		cursor: pointer;
+	}
+	#comment-form button[type='submit']:hover {
+		background: var(--accent-dark);
+		border-color: var(--accent-dark);
+	}
+	#reply-context {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.85em;
+		color: rgb(var(--gray));
+	}
+	#cancel-reply {
+		margin-left: 0.5em;
+		font-family: var(--font-mono);
+		font-size: 0.85em;
+		background: none;
+		border: none;
+		color: var(--accent);
+		cursor: pointer;
+		padding: 0;
+	}
+</style>
+
+<script>
+	interface CommentNode {
+		id: number;
+		parentId: number | null;
+		authorName: string;
+		body: string;
+		createdAt: string;
+		children: CommentNode[];
+	}
+
+	const section = document.getElementById('comments') as HTMLElement;
+	const slug = section.dataset.slug ?? '';
+	const statusEl = document.getElementById('comments-status') as HTMLParagraphElement;
+	const listEl = document.getElementById('comments-list') as HTMLUListElement;
+	const form = document.getElementById('comment-form') as HTMLFormElement;
+	const nameInput = document.getElementById('comment-name') as HTMLInputElement;
+	const bodyInput = document.getElementById('comment-body') as HTMLTextAreaElement;
+	const parentIdInput = document.getElementById('parent-id') as HTMLInputElement;
+	const replyContext = document.getElementById('reply-context') as HTMLParagraphElement;
+	const replyContextName = document.getElementById('reply-context-name') as HTMLElement;
+	const formMessage = document.getElementById('form-message') as HTMLParagraphElement;
+
+	declare const turnstile: {
+		reset: (widget?: string | HTMLElement) => void;
+		getResponse: (widget?: string | HTMLElement) => string | undefined;
+	};
+
+	function buildTree(flat: CommentNode[]): CommentNode[] {
+		const byId = new Map<number, CommentNode>();
+		for (const c of flat) byId.set(c.id, { ...c, children: [] });
+		const roots: CommentNode[] = [];
+		for (const c of byId.values()) {
+			if (c.parentId && byId.has(c.parentId)) {
+				byId.get(c.parentId)!.children.push(c);
+			} else {
+				roots.push(c);
+			}
+		}
+		return roots;
+	}
+
+	function renderComment(comment: CommentNode): HTMLLIElement {
+		const li = document.createElement('li');
+		li.className = 'comment';
+
+		const meta = document.createElement('div');
+		meta.className = 'comment-meta';
+		const date = new Date(comment.createdAt).toLocaleDateString('en-us', {
+			year: 'numeric',
+			month: 'short',
+			day: 'numeric',
+		});
+		meta.textContent = `${comment.authorName} · ${date}`;
+
+		const body = document.createElement('p');
+		body.className = 'comment-body';
+		body.textContent = comment.body;
+
+		const replyBtn = document.createElement('button');
+		replyBtn.className = 'reply-link';
+		replyBtn.type = 'button';
+		replyBtn.textContent = 'Reply';
+		replyBtn.addEventListener('click', () => startReply(comment.id, comment.authorName));
+
+		li.append(meta, body, replyBtn);
+
+		if (comment.children.length > 0) {
+			const childList = document.createElement('ul');
+			childList.className = 'comment-thread';
+			for (const child of comment.children) {
+				childList.append(renderComment(child));
+			}
+			li.append(childList);
+		}
+
+		return li;
+	}
+
+	function startReply(id: number, authorName: string) {
+		parentIdInput.value = String(id);
+		replyContextName.textContent = authorName;
+		replyContext.hidden = false;
+		bodyInput.focus();
+		form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+	}
+
+	document.getElementById('cancel-reply')?.addEventListener('click', () => {
+		parentIdInput.value = '';
+		replyContext.hidden = true;
+	});
+
+	async function loadComments() {
+		const res = await fetch(`/api/comments?slug=${encodeURIComponent(slug)}`);
+		if (!res.ok) {
+			statusEl.textContent = 'Could not load comments.';
+			return;
+		}
+		const data = await res.json();
+		listEl.innerHTML = '';
+		if (data.comments.length === 0) {
+			statusEl.textContent = 'No comments yet — be the first.';
+			return;
+		}
+		statusEl.textContent = '';
+		const tree = buildTree(data.comments);
+		for (const root of tree) listEl.append(renderComment(root));
+	}
+
+	form.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		formMessage.textContent = '';
+
+		const turnstileToken = turnstile?.getResponse();
+		if (!turnstileToken) {
+			formMessage.textContent = 'Please complete the captcha.';
+			return;
+		}
+
+		const payload = {
+			slug,
+			parentId: parentIdInput.value ? Number(parentIdInput.value) : null,
+			authorName: nameInput.value.trim(),
+			body: bodyInput.value.trim(),
+			turnstileToken,
+		};
+
+		const res = await fetch('/api/comments', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(payload),
+		});
+		const data = await res.json();
+
+		if (!res.ok) {
+			formMessage.textContent = data.error ?? 'Something went wrong.';
+			turnstile?.reset();
+			return;
+		}
+
+		formMessage.textContent = data.message;
+		form.reset();
+		parentIdInput.value = '';
+		replyContext.hidden = true;
+		turnstile?.reset();
+	});
+
+	loadComments();
+</script>

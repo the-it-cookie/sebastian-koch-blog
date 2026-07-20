@@ -2,22 +2,29 @@
 
 Personal blog for Sebastian Koch: Power Platform, Dynamics 365, Customer
 Insights - Journeys, AI/Copilot, and GDPR-compliant consent architecture.
-Static site built with [Astro](https://astro.build), no backend, no database.
+Static site built with [Astro](https://astro.build). The site itself is
+static; a small Cloudflare Worker + D1 database sits behind it only to
+power comments (see below).
 
 ## Project structure
 
 ```text
+├── migrations/                D1 schema migrations (comments table)
+├── worker/index.js             Worker: /api/comments + /api/admin/comments,
+│                                falls through to static assets otherwise
 ├── public/                  static assets (favicon, robots.txt, ...)
 ├── src/
 │   ├── assets/               images and fonts, processed by Astro
-│   ├── components/            BaseHead, Header, Footer, ...
+│   ├── components/            BaseHead, Header, Footer, Comments, ...
 │   ├── content/blog/           articles (Markdown/MDX)
 │   ├── layouts/BlogPost.astro  article page layout
-│   ├── pages/                  routes: home, blog, tags, about, 404, rss.xml
+│   ├── pages/                  routes: home, blog, tags, about, 404, rss.xml,
+│   │                           admin/comments (moderation queue)
 │   ├── utils/                  reading-time and tag-slug helpers
 │   ├── consts.ts               site title, description, tagline, author, links
 │   └── content.config.ts       frontmatter schema for the blog collection
 ├── astro.config.mjs
+├── wrangler.jsonc              Worker/assets/D1 config for Cloudflare
 └── package.json
 ```
 
@@ -57,6 +64,40 @@ heroImage: ../../assets/your-image.jpg # optional
   internal field/plugin names (see `Blog_Build_Brief_Astro.md` §9 and
   `Blog_Themen_CIJ.md`).
 
+## Comments
+
+Comments are anonymous (readers pick their own display name, no account
+needed) and support one level of threaded replies. No third-party widget —
+it's a small Cloudflare Worker (`worker/index.js`) plus a D1 database
+(`migrations/0001_create_comments.sql`), guarded by Cloudflare Turnstile and
+a manual moderation queue: every new comment is stored as `pending` and only
+appears publicly once approved.
+
+- **Post/read comments**: handled automatically by the `Comments` component
+  on each article page — nothing to configure per post.
+- **Moderate**: open `/admin/comments/`, paste the admin secret once (stored
+  in that browser's `localStorage`), then Approve or Reject each pending
+  comment. The page is `noindex`ed and excluded from the sitemap, but it is
+  not otherwise hidden — do not share the URL, and treat the admin secret
+  like a password.
+- **Secrets**: `TURNSTILE_SECRET` (Cloudflare Turnstile) and `ADMIN_SECRET`
+  (moderation queue) are stored as Worker secrets via
+  `npx wrangler secret put <NAME>`, not in the repo. For local development,
+  put the same names in a git-ignored `.dev.vars` file; Cloudflare's
+  documented "always passes" Turnstile test secret
+  (`1x0000000000000000000000000000000AA`) works fine there so you don't need
+  the real one locally.
+- **Local end-to-end testing**: `npm run build && npx wrangler dev` runs the
+  real Worker against a local D1 simulation (seeded via
+  `npx wrangler d1 migrations apply sebastian-koch-blog-comments --local`).
+  Plain `npm run dev` (Astro's dev server) does not run the Worker, so
+  `/api/comments` calls will 404 there.
+- **Schema changes**: add a new file under `migrations/`, then apply it with
+  `npx wrangler d1 migrations apply sebastian-koch-blog-comments --remote`
+  (and `--local` for your dev database).
+- No IP addresses or other visitor metadata are stored — just name, comment
+  body, timestamp, and the thread relationship.
+
 ## Before going live
 
 Two placeholders need real values:
@@ -70,21 +111,10 @@ Two placeholders need real values:
 
 ## Deploying to Cloudflare
 
-Cloudflare now serves static sites through the unified Workers platform
-(static assets), configured via `wrangler.jsonc` in the repo root:
-
-```jsonc
-{
-	"name": "sebastian-koch-blog",
-	"compatibility_date": "2026-07-17",
-	"assets": {
-		"directory": "./dist"
-	}
-}
-```
-
-No `main` entry is needed — this is a pure static-assets deployment, no
-Worker script involved.
+Cloudflare serves the site through the unified Workers platform: static
+assets plus the small comments Worker, configured via `wrangler.jsonc` in
+the repo root (`main` is the Worker entry, `assets` is the static build
+output, `d1_databases` binds the comments database).
 
 1. Push this repository to GitHub.
 2. In the Cloudflare dashboard: **Compute (Workers) → Create application →

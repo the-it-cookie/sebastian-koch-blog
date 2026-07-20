@@ -7,7 +7,12 @@ import { defineConfig, fontProviders } from 'astro/config';
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://sebastian-koch-blog.sebastian-koch-e7e.workers.dev',
-	integrations: [mdx(), sitemap()],
+	integrations: [
+		mdx(),
+		sitemap({
+			filter: (page) => !page.includes('/admin/'),
+		}),
+	],
 	fonts: [
 		{
 			provider: fontProviders.google(),
