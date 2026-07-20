@@ -6,7 +6,7 @@ import { defineConfig, fontProviders } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://sebastian-koch-blog.sebastian-koch-e7e.workers.dev',
+	site: 'https://sebastiancook.com',
 	integrations: [
 		mdx(),
 		sitemap({
