@@ -8,7 +8,7 @@ draft: false
 
 Before you can design a good opt-in form, send a compliant newsletter, or debug why a checkbox will not save, you need one piece of mental model: how Customer Insights - Journeys actually structures consent. It looks simple on the surface and causes real problems the moment you skip past it.
 
-CIJ organizes consent in three layers.
+CIJ organizes consent in up to three layers.
 
 A **compliance profile** sits at the top. It is the overall frame, usually tied to a brand, a region, or a line of business. If you run marketing for more than one brand out of the same environment, you will likely have more than one compliance profile.
 
@@ -26,4 +26,4 @@ Say you run three brands, each with its own compliance profile, but one communic
 
 This is not an incidental detail, it is a documented part of the model. [Microsoft's own documentation](https://learn.microsoft.com/en-us/dynamics365/customer-insights/journeys/real-time-marketing-compliance-settings) confirms it directly: a purpose can be shared across multiple compliance profiles, while a topic can only ever link to a single purpose. There is even a dedicated toggle when creating a new compliance profile, "Use Previously Captured Consent," that lets a new profile inherit an existing one's purposes instead of creating fresh ones. That toggle is the concrete configuration path for sharing.
 
-That single difference, shareable across profiles versus scoped to one, is usually the deciding factor in whether something belongs on the purpose level or the topic level. It is not just a modeling detail, it is a design decision with real trade-offs, and it is exactly what I want to walk through in the next recipe.
+That single difference, shareable across profiles versus scoped to one, is usually the deciding factor in whether something belongs on the purpose level or the topic level. It is not just a modeling detail, it is a design decision with real trade-offs, and it is exactly what I want to walk through in the next **recipe**.

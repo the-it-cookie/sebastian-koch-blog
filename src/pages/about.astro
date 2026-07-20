@@ -5,7 +5,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import TechStack from '../components/TechStack.astro';
-import { AUTHOR_NAME } from '../consts';
+import { AUTHOR_IDENTITY_LINE, AUTHOR_NAME, SITE_TAGLINE } from '../consts';
 ---
 
 <!doctype html>
@@ -21,7 +21,9 @@ import { AUTHOR_NAME } from '../consts';
 		<Header />
 		<main class="prose">
 			<div class="intro">
-				<Image src={profilePhoto} alt={AUTHOR_NAME} width={160} height={160} class="avatar" />
+				<button type="button" id="avatar-trigger" aria-label={`View larger photo of ${AUTHOR_NAME}`}>
+					<Image src={profilePhoto} alt={AUTHOR_NAME} width={160} height={160} class="avatar" />
+				</button>
 				<h1>About</h1>
 			</div>
 			<p>
@@ -31,8 +33,8 @@ import { AUTHOR_NAME } from '../consts';
 			</p>
 			<p>
 				The kitchen metaphor stuck around, because it fits the work better than I expected: figure
-				something out once, test it properly, then write down the recipe so the next person can
-				follow it without the detours.
+				something out once, test it properly, then write down the <strong>recipe</strong> so the
+				next person can follow it without the detours.
 			</p>
 			<p>
 				I am Sebastian, an industrial engineer by training and a consultant by trade, based in
@@ -62,19 +64,22 @@ import { AUTHOR_NAME } from '../consts';
 				that the best solutions get argued out with good people, not handed down.
 			</p>
 			<p>
-				This site is my cookbook. Recipes from real projects: practical Power Platform and Dynamics
-				365 patterns, the consent and compliance details most people skip, how I put AI to work
-				without cutting corners on data protection, and the traps that cost me hours so they cost
-				you less. Some posts are deep dives, some are quick notes. All of them come from something
-				I actually had to solve.
+				This site is my <strong>cookbook</strong>. <strong>Recipes</strong> from real projects:
+				practical Power Platform and Dynamics 365 patterns, the consent and compliance details most
+				people skip, how I put AI to work without cutting corners on data protection, and the traps
+				that cost me hours so they cost you less. Some posts are deep dives, some are quick notes.
+				All of them come from something I actually had to solve.
 			</p>
 			<p>
-				Wirtschaftsingenieur by training, consultant at CONSOS GmbH by trade, generalist by nature.
-				Digitization is tactical, transformation is strategic.
+				{AUTHOR_IDENTITY_LINE} {SITE_TAGLINE}.
 			</p>
 			<TechStack />
 		</main>
 		<Footer />
+		<dialog id="avatar-dialog">
+			<button type="button" id="avatar-dialog-close" aria-label="Close">&times;</button>
+			<Image src={profilePhoto} alt={AUTHOR_NAME} width={640} height={640} />
+		</dialog>
 	</body>
 </html>
 
@@ -103,6 +108,49 @@ import { AUTHOR_NAME } from '../consts';
 	.intro h1 {
 		margin: 0;
 	}
+	#avatar-trigger {
+		background: none;
+		border: none;
+		padding: 0;
+		border-radius: 999px;
+		cursor: zoom-in;
+		flex-shrink: 0;
+	}
+	#avatar-trigger:hover :global(.avatar) {
+		opacity: 0.85;
+	}
+	#avatar-dialog {
+		border: none;
+		border-radius: 12px;
+		padding: 0;
+		max-width: min(90vw, 640px);
+		max-height: 90vh;
+		background: var(--surface);
+	}
+	#avatar-dialog::backdrop {
+		background: rgba(0, 0, 0, 0.6);
+	}
+	#avatar-dialog :global(img) {
+		display: block;
+		max-width: 100%;
+		max-height: 90vh;
+		height: auto;
+		border-radius: 12px;
+	}
+	#avatar-dialog-close {
+		position: absolute;
+		top: 0.5em;
+		right: 0.5em;
+		width: 2em;
+		height: 2em;
+		border-radius: 999px;
+		border: none;
+		background: rgba(0, 0, 0, 0.5);
+		color: #fff;
+		font-size: 1.2em;
+		line-height: 1;
+		cursor: pointer;
+	}
 	@media (max-width: 480px) {
 		.intro {
 			flex-direction: column;
@@ -111,3 +159,15 @@ import { AUTHOR_NAME } from '../consts';
 		}
 	}
 </style>
+
+<script>
+	const trigger = document.getElementById('avatar-trigger');
+	const dialog = document.getElementById('avatar-dialog') as HTMLDialogElement;
+	const closeBtn = document.getElementById('avatar-dialog-close');
+
+	trigger?.addEventListener('click', () => dialog?.showModal());
+	closeBtn?.addEventListener('click', () => dialog?.close());
+	dialog?.addEventListener('click', (event) => {
+		if (event.target === dialog) dialog.close();
+	});
+</script>
