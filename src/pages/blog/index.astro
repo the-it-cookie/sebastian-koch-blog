@@ -22,7 +22,7 @@ const posts = allPosts
 			main {
 				width: 720px;
 			}
-			ul {
+			ul.post-list {
 				list-style-type: none;
 				margin: 0;
 				padding: 0;
@@ -48,7 +48,7 @@ const posts = allPosts
 		<Header />
 		<main>
 			<section>
-				<ul>
+				<ul class="post-list">
 					{
 						posts.map((post) => (
 							<li>
