@@ -11,7 +11,13 @@ const { slug } = Astro.props;
 const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 ---
 
-<section class="comments" id="comments" data-slug={slug}>
+<section
+	class="comments"
+	id="comments"
+	data-slug={slug}
+	data-avatar-src={avatar.src}
+	data-author-name={AUTHOR_NAME}
+>
 	<h2>Comments</h2>
 	<p id="comments-status" class="meta">Loading comments…</p>
 	<ul id="comments-list" class="comment-thread"></ul>
@@ -153,7 +159,7 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 	}
 </style>
 
-<script define:vars={{ avatarSrc: avatar.src, authorDisplayName: AUTHOR_NAME }}>
+<script>
 	interface CommentNode {
 		id: number;
 		parentId: number | null;
@@ -166,6 +172,8 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 
 	const section = document.getElementById('comments') as HTMLElement;
 	const slug = section.dataset.slug ?? '';
+	const avatarSrc = section.dataset.avatarSrc ?? '';
+	const authorDisplayName = section.dataset.authorName ?? '';
 	const statusEl = document.getElementById('comments-status') as HTMLParagraphElement;
 	const listEl = document.getElementById('comments-list') as HTMLUListElement;
 	const form = document.getElementById('comment-form') as HTMLFormElement;
