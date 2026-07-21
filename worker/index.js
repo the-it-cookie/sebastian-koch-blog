@@ -120,6 +120,11 @@ async function handlePostComment(request, env) {
 		.bind(slug, parentId ?? null, authorName.trim(), body.trim())
 		.run();
 
+	await sendNotificationEmail(env, {
+		subject: `New comment awaiting approval (${slug.trim()})`,
+		text: `${authorName.trim()} commented on "${slug.trim()}":\n\n${body.trim()}\n\nReview it at https://sebastiancook.com/admin/`,
+	});
+
 	return json(
 		{ status: 'pending', message: 'Thanks! Your comment will appear after a quick review.' },
 		{ status: 201 },
