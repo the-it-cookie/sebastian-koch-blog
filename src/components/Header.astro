@@ -1,11 +1,14 @@
 ---
-import { LINKEDIN_URL, SITE_TITLE } from '../consts';
+import { AUTHOR_NAME_HINT, LINKEDIN_URL, SITE_TITLE } from '../consts';
 import HeaderLink from './HeaderLink.astro';
 ---
 
 <header>
 	<nav>
-		<h2><a href="/">{SITE_TITLE}</a></h2>
+		<div class="brand">
+			<h2><a href="/">{SITE_TITLE}</a></h2>
+			<p class="name-hint">{AUTHOR_NAME_HINT}</p>
+		</div>
 		<div class="internal-links">
 			<HeaderLink href="/">Home</HeaderLink>
 			<HeaderLink href="/blog">Cookbook</HeaderLink>
@@ -31,6 +34,12 @@ import HeaderLink from './HeaderLink.astro';
 		background: var(--bg-header);
 		box-shadow: 0 2px 8px rgba(var(--black), 5%);
 	}
+	.brand {
+		display: flex;
+		flex-direction: column;
+		gap: 0.15em;
+		padding: 0.6em 0;
+	}
 	h2 {
 		margin: 0;
 		font-size: 1em;
@@ -40,6 +49,12 @@ import HeaderLink from './HeaderLink.astro';
 	h2 a.active {
 		text-decoration: none;
 		color: rgb(var(--black));
+	}
+	.name-hint {
+		margin: 0;
+		font-family: var(--font-mono);
+		font-size: 0.7em;
+		color: rgb(var(--gray));
 	}
 	nav {
 		display: flex;

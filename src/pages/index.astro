@@ -4,15 +4,7 @@ import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
-import {
-	AUTHOR_IDENTITY_LINE,
-	AUTHOR_NAME,
-	AUTHOR_NAME_HINT,
-	AUTHOR_POSITIONING,
-	SITE_DESCRIPTION,
-	SITE_TAGLINE,
-	SITE_TITLE,
-} from '../consts';
+import { AUTHOR_NAME, SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 
 const allPosts = await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft);
 const latestPosts = allPosts
@@ -30,28 +22,17 @@ const latestPosts = allPosts
 				padding: 2em 0 3em 0;
 			}
 			.hero h1 {
-				margin-bottom: 0.2em;
+				margin-bottom: 0.4em;
 			}
-			.hero p.name-hint {
-				margin: 0 0 0.8em 0;
-				font-family: var(--font-mono);
-				font-size: 0.8em;
-				color: rgb(var(--gray));
-			}
-			.hero p.positioning {
+			.hero p.intro {
 				margin: 0;
 				font-size: 1.25em;
 				color: rgb(var(--gray-dark));
 			}
-			.hero p.identity {
-				margin: 0.5em 0 0 0;
-				color: rgb(var(--gray-dark));
-			}
-			.hero p.tagline {
+			.hero p.pointer {
 				margin: 0.8em 0 0 0;
-				font-family: var(--font-mono);
 				font-size: 0.95em;
-				color: rgb(var(--gray-dark));
+				color: rgb(var(--gray));
 			}
 			h2.section-title {
 				border-bottom: 1px solid var(--border);
@@ -72,10 +53,15 @@ const latestPosts = allPosts
 		<main>
 			<section class="hero">
 				<h1>{AUTHOR_NAME}</h1>
-				<p class="name-hint">{AUTHOR_NAME_HINT}</p>
-				<p class="positioning">{AUTHOR_POSITIONING}</p>
-				<p class="identity">{AUTHOR_IDENTITY_LINE}</p>
-				<p class="tagline">{SITE_TAGLINE}</p>
+				<p class="intro">
+					I collect my CRM and Power Platform recipes here — hope you find something worth
+					tasting, too :)
+				</p>
+				<p class="pointer">
+					New here? <a href="/about">The About page</a> or
+					<a href="/blog/why-this-site-is-a-cookbook/">the first recipe</a> will give you a feel
+					for what this is.
+				</p>
 			</section>
 			<section>
 				<h2 class="section-title">Fresh from the kitchen</h2>

@@ -1,12 +1,11 @@
 // Place any global data in this file.
 // You can import this data from anywhere in your site by using the `import` keyword.
 
-export const SITE_TITLE = 'Sebastian Koch';
+export const SITE_TITLE = 'Sebastian Cook';
 export const SITE_DESCRIPTION =
 	'Practical Power Platform and Dynamics 365 patterns, AI in Copilot done right, and GDPR-compliant consent architecture.';
 
-export const AUTHOR_NAME = 'Sebastian Koch';
-export const AUTHOR_POSITIONING = 'CRM and Power Platform Consultant at CONSOS GmbH';
+export const AUTHOR_NAME = 'Sebastian Cook';
 export const AUTHOR_NAME_HINT = 'Koch is German for "cook" — hence the cookbook.';
 export const AUTHOR_IDENTITY_LINE =
 	'Wirtschaftsingenieur by training, consultant at CONSOS GmbH by trade, generalist by nature.';
