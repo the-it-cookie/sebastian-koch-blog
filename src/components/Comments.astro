@@ -18,7 +18,7 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 	data-avatar-src={avatar.src}
 	data-author-name={AUTHOR_NAME}
 >
-	<h2>Comments</h2>
+	<h2 id="comments-heading">Comments</h2>
 	<p id="comments-status" class="meta">Loading comments…</p>
 	<ul id="comments-list" class="comment-thread"></ul>
 
@@ -40,7 +40,10 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
-<style>
+<style is:global>
+	/* Comment list items are created client-side via document.createElement, so this
+	   must be global — Astro's scoped-style attribute is only stamped onto elements
+	   present in this component's own template, never onto dynamically created nodes. */
 	.comments {
 		margin-top: 3em;
 		padding-top: 2em;
@@ -53,6 +56,8 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 	}
 	.comment-thread .comment-thread {
 		margin: 1em 0 0 1.5em;
+		padding-left: 1em;
+		border-left: 2px solid var(--border);
 	}
 	.comment {
 		border: 1px solid var(--border);
@@ -61,14 +66,15 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 		padding: 1em 1.25em;
 		margin-bottom: 1em;
 	}
+	.comment + .comment,
+	.comment-thread .comment {
+		margin-top: 1em;
+	}
 	.comment .comment-meta {
 		display: flex;
 		align-items: center;
 		gap: 0.4em;
-		font-family: var(--font-mono);
-		font-size: 0.8em;
-		color: rgb(var(--gray));
-		margin-bottom: 0.4em;
+		margin-bottom: 10px;
 	}
 	.comment.is-author {
 		border-left: 3px solid var(--accent);
@@ -79,31 +85,44 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 		border-radius: 999px;
 		object-fit: cover;
 	}
-	.comment .author-name {
-		color: rgb(var(--black));
+	.comment .comment-author-name {
+		font-family: var(--font-sans);
+		font-size: 0.95em;
 		font-weight: 600;
+		color: rgb(var(--black));
 	}
-	.comment .author-badge {
-		padding: 0.1em 0.5em;
-		border-radius: 999px;
-		background: var(--accent);
-		color: #fff;
-		font-size: 0.85em;
+	.comment .comment-meta-sep {
+		color: rgb(var(--gray));
+	}
+	.comment .comment-date {
+		font-family: var(--font-mono);
+		font-size: 0.8em;
+		color: rgb(var(--gray));
 	}
 	.comment .comment-body {
 		margin: 0 0 0.5em 0;
+		color: rgb(var(--gray-dark));
+		font-weight: 400;
 		white-space: pre-wrap;
 	}
 	.comment .reply-link {
-		font-family: var(--font-mono);
-		font-size: 0.8em;
-		background: none;
-		border: none;
+		display: inline-flex;
+		align-items: center;
+		margin-top: 0.75em;
+		padding: 0.3em 0.9em;
+		border-radius: 999px;
+		border: 1px solid var(--border);
+		background: var(--surface);
 		color: var(--accent);
+		font-family: var(--font-mono);
+		font-size: 0.75em;
 		cursor: pointer;
-		padding: 0;
+		transition:
+			border-color 160ms ease,
+			color 160ms ease;
 	}
 	.comment .reply-link:hover {
+		border-color: var(--accent);
 		color: var(--accent-dark);
 	}
 	#comment-form {
@@ -174,6 +193,7 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 	const slug = section.dataset.slug ?? '';
 	const avatarSrc = section.dataset.avatarSrc ?? '';
 	const authorDisplayName = section.dataset.authorName ?? '';
+	const headingEl = document.getElementById('comments-heading') as HTMLHeadingElement;
 	const statusEl = document.getElementById('comments-status') as HTMLParagraphElement;
 	const listEl = document.getElementById('comments-list') as HTMLUListElement;
 	const form = document.getElementById('comment-form') as HTMLFormElement;
@@ -223,21 +243,22 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 			avatarImg.width = 20;
 			avatarImg.height = 20;
 			meta.append(avatarImg);
-
-			const nameSpan = document.createElement('span');
-			nameSpan.className = 'author-name';
-			nameSpan.textContent = authorDisplayName;
-			meta.append(nameSpan);
-
-			const badge = document.createElement('span');
-			badge.className = 'author-badge';
-			badge.textContent = 'Author';
-			meta.append(badge);
-
-			meta.append(document.createTextNode(` · ${date}`));
-		} else {
-			meta.append(document.createTextNode(`${comment.authorName} · ${date}`));
 		}
+
+		const nameSpan = document.createElement('span');
+		nameSpan.className = 'comment-author-name';
+		nameSpan.textContent = comment.isAuthor ? authorDisplayName : comment.authorName;
+		meta.append(nameSpan);
+
+		const sep = document.createElement('span');
+		sep.className = 'comment-meta-sep';
+		sep.textContent = '·';
+		meta.append(sep);
+
+		const dateSpan = document.createElement('span');
+		dateSpan.className = 'comment-date';
+		dateSpan.textContent = date;
+		meta.append(dateSpan);
 
 		const body = document.createElement('p');
 		body.className = 'comment-body';
@@ -284,6 +305,7 @@ const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 		}
 		const data = await res.json();
 		listEl.innerHTML = '';
+		headingEl.textContent = data.comments.length > 0 ? `Comments (${data.comments.length})` : 'Comments';
 		if (data.comments.length === 0) {
 			statusEl.textContent = 'No comments yet — be the first.';
 			return;
