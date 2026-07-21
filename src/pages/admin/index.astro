@@ -1,0 +1,285 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import { SITE_TITLE } from '../../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead title={`Admin | ${SITE_TITLE}`} description="Private admin area." />
+		<meta name="robots" content="noindex, nofollow" />
+	</head>
+	<body>
+		<main class="admin">
+			<h1>Admin</h1>
+			<div id="auth-gate">
+				<label for="secret-input">Admin secret</label>
+				<input type="password" id="secret-input" autocomplete="off" />
+				<button id="secret-save">Save</button>
+			</div>
+
+			<section>
+				<h2>Pending comments</h2>
+				<p id="pending-status" class="meta"></p>
+				<ul id="pending-list" class="admin-list"></ul>
+			</section>
+
+			<section>
+				<h2>Published comments</h2>
+				<p id="published-status" class="meta"></p>
+				<ul id="published-list" class="admin-list"></ul>
+			</section>
+
+			<section>
+				<h2>Contact messages</h2>
+				<p id="contact-status" class="meta"></p>
+				<ul id="contact-list" class="admin-list"></ul>
+			</section>
+		</main>
+	</body>
+</html>
+
+<style>
+	.admin {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: auto;
+		padding: 3em 1em;
+	}
+	.admin section {
+		margin-top: 2.5em;
+	}
+	#auth-gate {
+		display: flex;
+		gap: 0.5em;
+		align-items: center;
+		margin-bottom: 1.5em;
+	}
+	#auth-gate input {
+		flex: 1;
+		padding: 0.5em;
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		font-family: var(--font-mono);
+	}
+	#auth-gate button,
+	.item-actions button {
+		font-family: var(--font-mono);
+		font-size: 0.85em;
+		padding: 0.4em 0.9em;
+		border-radius: 6px;
+		border: 1px solid var(--border);
+		background: var(--surface);
+		color: rgb(var(--gray-dark));
+		cursor: pointer;
+	}
+	.item-actions button:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+	.admin-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 1em;
+	}
+	.admin-item {
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 1em 1.25em;
+		background: var(--surface);
+	}
+	.admin-item .item-meta {
+		font-family: var(--font-mono);
+		font-size: 0.8em;
+		color: rgb(var(--gray));
+		margin-bottom: 0.5em;
+	}
+	.admin-item .item-body {
+		white-space: pre-wrap;
+		margin: 0 0 0.75em 0;
+	}
+	.item-actions {
+		display: flex;
+		gap: 0.5em;
+	}
+</style>
+
+<script>
+	const STORAGE_KEY = 'blog-admin-secret';
+	const secretInput = document.getElementById('secret-input') as HTMLInputElement;
+
+	const pendingStatus = document.getElementById('pending-status') as HTMLParagraphElement;
+	const pendingList = document.getElementById('pending-list') as HTMLUListElement;
+	const publishedStatus = document.getElementById('published-status') as HTMLParagraphElement;
+	const publishedList = document.getElementById('published-list') as HTMLUListElement;
+	const contactStatus = document.getElementById('contact-status') as HTMLParagraphElement;
+	const contactList = document.getElementById('contact-list') as HTMLUListElement;
+
+	interface CommentRow {
+		id: number;
+		postSlug: string;
+		parentId: number | null;
+		authorName: string;
+		body: string;
+		status: 'pending' | 'approved';
+		createdAt: string;
+	}
+
+	interface ContactRow {
+		id: number;
+		name: string;
+		email: string;
+		topic: string;
+		message: string;
+		createdAt: string;
+	}
+
+	const stored = localStorage.getItem(STORAGE_KEY);
+	if (stored) secretInput.value = stored;
+
+	function getSecret() {
+		return localStorage.getItem(STORAGE_KEY) ?? '';
+	}
+
+	function authHeaders() {
+		return { Authorization: `Bearer ${getSecret()}` };
+	}
+
+	function renderComment(comment: CommentRow, list: HTMLUListElement) {
+		const li = document.createElement('li');
+		li.className = 'admin-item';
+
+		const meta = document.createElement('div');
+		meta.className = 'item-meta';
+		meta.textContent = `${comment.authorName} · ${comment.postSlug}${comment.parentId ? ` · reply to #${comment.parentId}` : ''} · ${comment.createdAt}`;
+
+		const body = document.createElement('p');
+		body.className = 'item-body';
+		body.textContent = comment.body;
+
+		const actions = document.createElement('div');
+		actions.className = 'item-actions';
+
+		if (comment.status === 'pending') {
+			const approveBtn = document.createElement('button');
+			approveBtn.textContent = 'Approve';
+			approveBtn.addEventListener('click', () => moderateComment(comment.id, 'approve'));
+			actions.append(approveBtn);
+		}
+
+		const deleteBtn = document.createElement('button');
+		deleteBtn.textContent = 'Delete';
+		deleteBtn.addEventListener('click', () => moderateComment(comment.id, 'delete'));
+		actions.append(deleteBtn);
+
+		li.append(meta, body, actions);
+		list.append(li);
+	}
+
+	function renderContact(contact: ContactRow) {
+		const li = document.createElement('li');
+		li.className = 'admin-item';
+
+		const meta = document.createElement('div');
+		meta.className = 'item-meta';
+		meta.textContent = `${contact.name} <${contact.email}> · ${contact.topic} · ${contact.createdAt}`;
+
+		const body = document.createElement('p');
+		body.className = 'item-body';
+		body.textContent = contact.message;
+
+		const actions = document.createElement('div');
+		actions.className = 'item-actions';
+
+		const deleteBtn = document.createElement('button');
+		deleteBtn.textContent = 'Delete';
+		deleteBtn.addEventListener('click', () => deleteContact(contact.id));
+		actions.append(deleteBtn);
+
+		li.append(meta, body, actions);
+		contactList.append(li);
+	}
+
+	async function loadComments() {
+		const secret = getSecret();
+		if (!secret) {
+			pendingStatus.textContent = 'Enter your admin secret above to load the queue.';
+			publishedStatus.textContent = '';
+			return;
+		}
+		pendingStatus.textContent = 'Loading...';
+		publishedStatus.textContent = 'Loading...';
+		const res = await fetch('/api/admin/comments', { headers: authHeaders() });
+		if (res.status === 401) {
+			pendingStatus.textContent = 'Wrong secret.';
+			publishedStatus.textContent = '';
+			pendingList.innerHTML = '';
+			publishedList.innerHTML = '';
+			return;
+		}
+		const data = await res.json();
+		const comments: CommentRow[] = data.comments;
+		const pending = comments.filter((c) => c.status === 'pending');
+		const published = comments.filter((c) => c.status === 'approved');
+
+		pendingList.innerHTML = '';
+		pendingStatus.textContent = pending.length === 0 ? 'Nothing pending.' : `${pending.length} pending`;
+		for (const c of pending) renderComment(c, pendingList);
+
+		publishedList.innerHTML = '';
+		publishedStatus.textContent =
+			published.length === 0 ? 'Nothing published yet.' : `${published.length} published`;
+		for (const c of published) renderComment(c, publishedList);
+	}
+
+	async function loadContact() {
+		const secret = getSecret();
+		if (!secret) {
+			contactStatus.textContent = 'Enter your admin secret above to load messages.';
+			return;
+		}
+		contactStatus.textContent = 'Loading...';
+		const res = await fetch('/api/admin/contact', { headers: authHeaders() });
+		if (res.status === 401) {
+			contactStatus.textContent = 'Wrong secret.';
+			contactList.innerHTML = '';
+			return;
+		}
+		const data = await res.json();
+		const messages: ContactRow[] = data.messages;
+		contactList.innerHTML = '';
+		contactStatus.textContent = messages.length === 0 ? 'No messages.' : `${messages.length} message(s)`;
+		for (const m of messages) renderContact(m);
+	}
+
+	function loadAll() {
+		loadComments();
+		loadContact();
+	}
+
+	async function moderateComment(id: number, action: 'approve' | 'delete') {
+		await fetch(`/api/admin/comments/${id}/${action}`, {
+			method: 'POST',
+			headers: authHeaders(),
+		});
+		loadComments();
+	}
+
+	async function deleteContact(id: number) {
+		await fetch(`/api/admin/contact/${id}/delete`, {
+			method: 'POST',
+			headers: authHeaders(),
+		});
+		loadContact();
+	}
+
+	document.getElementById('secret-save')?.addEventListener('click', () => {
+		localStorage.setItem(STORAGE_KEY, secretInput.value.trim());
+		loadAll();
+	});
+
+	loadAll();
+</script>

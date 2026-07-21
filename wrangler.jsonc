@@ -6,6 +6,9 @@
 		"directory": "./dist",
 		"binding": "ASSETS"
 	},
+	"vars": {
+		"CONTACT_NOTIFY_EMAIL": "sebastian.koch@consos.de"
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",
