@@ -126,6 +126,7 @@ import { SITE_TITLE } from '../../consts';
 		body: string;
 		status: 'pending' | 'approved';
 		createdAt: string;
+		isAuthor: boolean;
 	}
 
 	interface ContactRow {
@@ -154,7 +155,7 @@ import { SITE_TITLE } from '../../consts';
 
 		const meta = document.createElement('div');
 		meta.className = 'item-meta';
-		meta.textContent = `${comment.authorName} · ${comment.postSlug}${comment.parentId ? ` · reply to #${comment.parentId}` : ''} · ${comment.createdAt}`;
+		meta.textContent = `${comment.authorName}${comment.isAuthor ? ' ★' : ''} · ${comment.postSlug}${comment.parentId ? ` · reply to #${comment.parentId}` : ''} · ${comment.createdAt}`;
 
 		const body = document.createElement('p');
 		body.className = 'item-body';
@@ -169,6 +170,13 @@ import { SITE_TITLE } from '../../consts';
 			approveBtn.addEventListener('click', () => moderateComment(comment.id, 'approve'));
 			actions.append(approveBtn);
 		}
+
+		const authorBtn = document.createElement('button');
+		authorBtn.textContent = comment.isAuthor ? 'Unmark as me' : 'Mark as me';
+		authorBtn.addEventListener('click', () =>
+			moderateComment(comment.id, comment.isAuthor ? 'unmark-author' : 'mark-author'),
+		);
+		actions.append(authorBtn);
 
 		const deleteBtn = document.createElement('button');
 		deleteBtn.textContent = 'Delete';
@@ -260,7 +268,10 @@ import { SITE_TITLE } from '../../consts';
 		loadContact();
 	}
 
-	async function moderateComment(id: number, action: 'approve' | 'delete') {
+	async function moderateComment(
+		id: number,
+		action: 'approve' | 'delete' | 'mark-author' | 'unmark-author',
+	) {
 		await fetch(`/api/admin/comments/${id}/${action}`, {
 			method: 'POST',
 			headers: authHeaders(),

@@ -65,14 +65,15 @@ async function handleGetComments(request, env) {
 	if (!slug) return badRequest('Missing slug');
 
 	const { results } = await env.DB.prepare(
-		`SELECT id, parent_id as parentId, author_name as authorName, body, created_at as createdAt
+		`SELECT id, parent_id as parentId, author_name as authorName, body, created_at as createdAt,
+		        is_author as isAuthor
 		 FROM comments WHERE post_slug = ?1 AND status = 'approved'
 		 ORDER BY created_at ASC`,
 	)
 		.bind(slug)
 		.all();
 
-	return json({ comments: results });
+	return json({ comments: results.map((c) => ({ ...c, isAuthor: Boolean(c.isAuthor) })) });
 }
 
 async function handlePostComment(request, env) {
@@ -183,11 +184,11 @@ async function handleAdminListComments(request, env) {
 
 	const { results } = await env.DB.prepare(
 		`SELECT id, post_slug as postSlug, parent_id as parentId, author_name as authorName,
-		        body, status, created_at as createdAt
+		        body, status, created_at as createdAt, is_author as isAuthor
 		 FROM comments ORDER BY created_at ASC`,
 	).all();
 
-	return json({ comments: results });
+	return json({ comments: results.map((c) => ({ ...c, isAuthor: Boolean(c.isAuthor) })) });
 }
 
 async function handleAdminModerateComment(request, env, id, action) {
@@ -197,6 +198,10 @@ async function handleAdminModerateComment(request, env, id, action) {
 		await env.DB.prepare(`UPDATE comments SET status = 'approved' WHERE id = ?1`).bind(id).run();
 	} else if (action === 'delete') {
 		await env.DB.prepare(`DELETE FROM comments WHERE id = ?1`).bind(id).run();
+	} else if (action === 'mark-author') {
+		await env.DB.prepare(`UPDATE comments SET is_author = 1 WHERE id = ?1`).bind(id).run();
+	} else if (action === 'unmark-author') {
+		await env.DB.prepare(`UPDATE comments SET is_author = 0 WHERE id = ?1`).bind(id).run();
 	} else {
 		return badRequest('Unknown action');
 	}
@@ -240,7 +245,9 @@ export default {
 			if (pathname === '/api/admin/comments' && request.method === 'GET') {
 				return await handleAdminListComments(request, env);
 			}
-			const moderateMatch = pathname.match(/^\/api\/admin\/comments\/(\d+)\/(approve|delete)$/);
+			const moderateMatch = pathname.match(
+				/^\/api\/admin\/comments\/(\d+)\/(approve|delete|mark-author|unmark-author)$/,
+			);
 			if (moderateMatch && request.method === 'POST') {
 				return await handleAdminModerateComment(
 					request,

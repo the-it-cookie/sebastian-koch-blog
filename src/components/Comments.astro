@@ -1,11 +1,14 @@
 ---
-import { TURNSTILE_SITE_KEY } from '../consts';
+import { getImage } from 'astro:assets';
+import profilePhoto from '../assets/profile.jpg';
+import { AUTHOR_NAME, TURNSTILE_SITE_KEY } from '../consts';
 
 interface Props {
 	slug: string;
 }
 
 const { slug } = Astro.props;
+const avatar = await getImage({ src: profilePhoto, width: 32, height: 32 });
 ---
 
 <section class="comments" id="comments" data-slug={slug}>
@@ -53,10 +56,33 @@ const { slug } = Astro.props;
 		margin-bottom: 1em;
 	}
 	.comment .comment-meta {
+		display: flex;
+		align-items: center;
+		gap: 0.4em;
 		font-family: var(--font-mono);
 		font-size: 0.8em;
 		color: rgb(var(--gray));
 		margin-bottom: 0.4em;
+	}
+	.comment.is-author {
+		border-left: 3px solid var(--accent);
+	}
+	.comment .author-avatar {
+		width: 20px;
+		height: 20px;
+		border-radius: 999px;
+		object-fit: cover;
+	}
+	.comment .author-name {
+		color: rgb(var(--black));
+		font-weight: 600;
+	}
+	.comment .author-badge {
+		padding: 0.1em 0.5em;
+		border-radius: 999px;
+		background: var(--accent);
+		color: #fff;
+		font-size: 0.85em;
 	}
 	.comment .comment-body {
 		margin: 0 0 0.5em 0;
@@ -127,13 +153,14 @@ const { slug } = Astro.props;
 	}
 </style>
 
-<script>
+<script define:vars={{ avatarSrc: avatar.src, authorDisplayName: AUTHOR_NAME }}>
 	interface CommentNode {
 		id: number;
 		parentId: number | null;
 		authorName: string;
 		body: string;
 		createdAt: string;
+		isAuthor: boolean;
 		children: CommentNode[];
 	}
 
@@ -170,7 +197,7 @@ const { slug } = Astro.props;
 
 	function renderComment(comment: CommentNode): HTMLLIElement {
 		const li = document.createElement('li');
-		li.className = 'comment';
+		li.className = comment.isAuthor ? 'comment is-author' : 'comment';
 
 		const meta = document.createElement('div');
 		meta.className = 'comment-meta';
@@ -179,7 +206,30 @@ const { slug } = Astro.props;
 			month: 'short',
 			day: 'numeric',
 		});
-		meta.textContent = `${comment.authorName} · ${date}`;
+
+		if (comment.isAuthor) {
+			const avatarImg = document.createElement('img');
+			avatarImg.className = 'author-avatar';
+			avatarImg.src = avatarSrc;
+			avatarImg.alt = authorDisplayName;
+			avatarImg.width = 20;
+			avatarImg.height = 20;
+			meta.append(avatarImg);
+
+			const nameSpan = document.createElement('span');
+			nameSpan.className = 'author-name';
+			nameSpan.textContent = authorDisplayName;
+			meta.append(nameSpan);
+
+			const badge = document.createElement('span');
+			badge.className = 'author-badge';
+			badge.textContent = 'Author';
+			meta.append(badge);
+
+			meta.append(document.createTextNode(` · ${date}`));
+		} else {
+			meta.append(document.createTextNode(`${comment.authorName} · ${date}`));
+		}
 
 		const body = document.createElement('p');
 		body.className = 'comment-body';
