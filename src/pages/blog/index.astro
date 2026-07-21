@@ -6,6 +6,7 @@ import FormattedDate from '../../components/FormattedDate.astro';
 import Header from '../../components/Header.astro';
 import { SITE_TITLE } from '../../consts';
 import { getReadingTime } from '../../utils/readingTime';
+import { slugifyTag } from '../../utils/slugify';
 
 const allPosts = await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft);
 const posts = allPosts
@@ -51,9 +52,11 @@ const posts = allPosts
 					{
 						posts.map((post) => (
 							<li>
-								<a class="card" href={`/blog/${post.id}/`}>
+								<div class="card">
 									<h2 class="title">
-										{post.data.title}
+										<a class="card-link" href={`/blog/${post.id}/`}>
+											{post.data.title}
+										</a>
 										{post.data.draft && <span class="draft-badge">Draft</span>}
 									</h2>
 									<p class="meta">
@@ -64,14 +67,16 @@ const posts = allPosts
 									{post.data.tags.length > 0 && (
 										<ul class="tag-list">
 											{post.data.tags.map((tag) => (
-												<li>{tag}</li>
+												<li>
+													<a href={`/tags/${slugifyTag(tag)}/`}>{tag}</a>
+												</li>
 											))}
 										</ul>
 									)}
 									<p class="read-more">
 										Read article <span class="arrow">&rarr;</span>
 									</p>
-								</a>
+								</div>
 							</li>
 						))
 					}

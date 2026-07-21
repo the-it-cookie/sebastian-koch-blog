@@ -174,19 +174,20 @@ hr {
 .tag-list {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.5em;
+	gap: 0.4em;
 	list-style: none;
 	margin: 0.5em 0;
 	padding: 0;
 }
 .tag-list li {
 	display: inline-block;
-	padding: 0.2em 0.7em;
+	padding: 0.15em 0.6em;
 	border-radius: 999px;
 	background: rgba(var(--gray-light), 100%);
 	color: rgb(var(--gray-dark));
 	font-family: var(--font-mono);
-	font-size: 0.8em;
+	font-size: 0.72em;
+	white-space: nowrap;
 }
 .tag-list li a {
 	color: inherit;
@@ -197,15 +198,18 @@ hr {
 	color: #fff;
 }
 
-/* Article preview cards ("recipe cards") — used on Home, Blog index, and Tag pages */
+/* Article preview cards ("recipe cards") — used on Home, Blog index, and Tag pages.
+   The title link is stretched to cover the whole card (::after inset:0) so the
+   card is clickable everywhere, while nested links like tag chips get their own
+   stacking context (position + z-index) to stay independently clickable. */
 .card {
+	position: relative;
 	display: block;
 	background: var(--surface);
 	border: 1px solid var(--border);
 	border-radius: 16px;
 	padding: 1.1em 1.25em;
 	box-shadow: var(--shadow-sm);
-	text-decoration: none;
 	transition:
 		transform 160ms ease,
 		box-shadow 160ms ease,
@@ -222,7 +226,16 @@ hr {
 	line-height: 1.3;
 	color: rgb(var(--black));
 }
-.card:hover .title {
+.card .title a.card-link {
+	color: inherit;
+	text-decoration: none;
+}
+.card .title a.card-link::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+}
+.card:hover .title a.card-link {
 	color: var(--accent);
 }
 .card .meta {
@@ -234,6 +247,10 @@ hr {
 }
 .card .tag-list {
 	margin: 0.7em 0 0 0;
+}
+.card .tag-list a {
+	position: relative;
+	z-index: 1;
 }
 .card .read-more {
 	display: flex;

@@ -55,8 +55,12 @@ const { tagName, posts } = Astro.props;
 				{
 					posts.map((post) => (
 						<li>
-							<a class="card" href={`/blog/${post.id}/`}>
-								<h2 class="title">{post.data.title}</h2>
+							<div class="card">
+								<h2 class="title">
+									<a class="card-link" href={`/blog/${post.id}/`}>
+										{post.data.title}
+									</a>
+								</h2>
 								<p class="meta">
 									<FormattedDate date={post.data.pubDate} /> &middot; {post.readingTime} min
 									read
@@ -65,7 +69,7 @@ const { tagName, posts } = Astro.props;
 								<p class="read-more">
 									Read article <span class="arrow">&rarr;</span>
 								</p>
-							</a>
+							</div>
 						</li>
 					))
 				}
