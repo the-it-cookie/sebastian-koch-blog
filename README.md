@@ -61,8 +61,8 @@ heroImage: ../../assets/your-image.jpg # optional
 - Reading time and the RSS feed are generated automatically from the post
   content and frontmatter — nothing else to wire up.
 - **Anonymize before publishing**: no real client names, no real GUIDs, no
-  internal field/plugin names (see `Blog_Build_Brief_Astro.md` §9 and
-  `Blog_Themen_CIJ.md`).
+  internal field/plugin names (see `feedback/Blog_Build_Brief_Astro.md` §9 and
+  `feedback/Blog_Themen_CIJ.md`).
 
 ## Comments
 

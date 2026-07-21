@@ -8,7 +8,7 @@ draft: true
 
 <!--
   Part 2 of 3 in the DOI/consent series. Full text to be supplied separately.
-  Outline below reflects the source notes in Blog_Themen_CIJ.md (Tier 1, item 1).
+  Outline below reflects the source notes in feedback/Blog_Themen_CIJ.md (Tier 1, item 1).
   Keep all examples generic — no client names, no real GUIDs, no internal
   field/plugin names (e.g. no co_ prefixes).
 -->
