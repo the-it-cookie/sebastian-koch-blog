@@ -1,0 +1,61 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import { AUTHOR_NAME } from '../consts';
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<BaseHead
+			title={`Imprint | ${AUTHOR_NAME}`}
+			description="Imprint / Impressum, information according to section 5 DDG (Germany)."
+		/>
+	</head>
+	<body>
+		<Header />
+		<main class="prose">
+			<h1>Imprint</h1>
+			<p class="meta">Information according to section 5 DDG (Digitale-Dienste-Gesetz, Germany).</p>
+
+			<p>
+				Sebastian Koch<br />
+				Industriestraße 29<br />
+				82194 Gröbenzell<br />
+				Germany
+			</p>
+
+			<p>Contact: <a href="mailto:sebastian.koch@consos.de">sebastian.koch@consos.de</a></p>
+
+			<p>
+				This site is a private, non-commercial project. It has no connection to my employer,
+				CONSOS GmbH, beyond what I write about myself on the <a href="/about">About page</a>.
+			</p>
+
+			<h2>Liability for links</h2>
+			<p>
+				This site contains links to external third-party websites. I have no influence over the
+				content of those sites and cannot accept liability for it. Responsibility for external
+				content lies solely with the respective provider or operator. At the time of linking, no
+				legal violations were apparent. If I become aware of any, I will remove such links
+				promptly.
+			</p>
+
+			<p class="meta">
+				See also the <a href="/privacy">privacy policy</a> for how this site handles data.
+			</p>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	main.prose {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: auto;
+		padding: 3em 1em;
+		color: rgb(var(--gray-dark));
+	}
+</style>

@@ -5,6 +5,10 @@ const today = new Date();
 
 <footer>
 	&copy; {today.getFullYear()} {AUTHOR_NAME}. All rights reserved.
+	<div class="legal-links">
+		<a href="/imprint">Imprint</a>
+		<a href="/privacy">Privacy</a>
+	</div>
 	<div class="social-links">
 		<a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
 			<span class="sr-only">Connect on LinkedIn</span>
@@ -23,6 +27,19 @@ const today = new Date();
 		border-top: 1px solid var(--border);
 		color: rgb(var(--gray));
 		text-align: center;
+	}
+	.legal-links {
+		display: flex;
+		justify-content: center;
+		gap: 1em;
+		margin-top: 0.8em;
+		font-size: 0.85em;
+	}
+	.legal-links a {
+		color: rgb(var(--gray));
+	}
+	.legal-links a:hover {
+		color: rgb(var(--gray-dark));
 	}
 	.social-links {
 		display: flex;
