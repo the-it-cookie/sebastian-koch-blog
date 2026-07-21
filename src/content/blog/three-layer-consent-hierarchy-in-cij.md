@@ -6,7 +6,7 @@ tags: ['Customer Insights - Journeys', 'Consent', 'Fundamentals']
 draft: false
 ---
 
-Before you can design a good opt-in form, send a compliant newsletter, or debug why a checkbox will not save, you need one piece of mental model: how Customer Insights - Journeys actually structures consent. It looks simple on the surface and causes real problems the moment you skip past it.
+Before you can design a good opt-in form, send a compliant newsletter, or debug why a checkbox will not save, you need one piece of mental model: how Customer Insights - Journeys (CIJ) actually structures consent. It looks simple on the surface and causes real problems the moment you skip past it.
 
 CIJ organizes consent in up to three layers.
 
