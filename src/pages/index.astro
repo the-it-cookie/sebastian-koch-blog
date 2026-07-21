@@ -44,7 +44,7 @@ const latestPosts = allPosts
 				padding: 0;
 				display: flex;
 				flex-direction: column;
-				gap: 1.25em;
+				gap: 1em;
 			}
 		</style>
 	</head>
@@ -75,6 +75,16 @@ const latestPosts = allPosts
 										<FormattedDate date={post.data.pubDate} />
 									</p>
 									<p class="description">{post.data.description}</p>
+									{post.data.tags.length > 0 && (
+										<ul class="tag-list">
+											{post.data.tags.map((tag) => (
+												<li>{tag}</li>
+											))}
+										</ul>
+									)}
+									<p class="read-more">
+										Read article <span class="arrow">&rarr;</span>
+									</p>
 								</a>
 							</li>
 						))
