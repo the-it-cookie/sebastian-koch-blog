@@ -1,0 +1,78 @@
+---
+/**
+ * DESIGN_august.md §1/§6. The class itself is set before first paint by the
+ * inline script in BaseHead; this control only flips it and remembers the
+ * choice. No wipe, no circle reveal — the colours simply cross over.
+ */
+import Icon from './Icon.astro';
+---
+
+<button type="button" id="theme-toggle" class="theme-toggle" aria-label="Switch colour theme">
+	<span class="theme-toggle__icons" aria-hidden="true">
+		<Icon name="sun" size={20} class="theme-toggle__sun" />
+		<Icon name="moon" size={20} class="theme-toggle__moon" />
+	</span>
+</button>
+
+<style>
+	.theme-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		padding: 0;
+		border: none;
+		border-radius: var(--radius-sm);
+		background: transparent;
+		color: var(--text-soft);
+		cursor: pointer;
+		transition: color var(--dur-fast) var(--ease-out);
+	}
+
+	.theme-toggle:hover {
+		color: var(--signal-text);
+	}
+
+	.theme-toggle__icons {
+		position: relative;
+		width: 20px;
+		height: 20px;
+	}
+
+	.theme-toggle__icons :global(svg) {
+		position: absolute;
+		inset: 0;
+		transition: opacity var(--dur-base) var(--ease-out);
+	}
+
+	.theme-toggle__icons :global(.theme-toggle__moon) {
+		opacity: 0;
+	}
+
+	:global(html.dark) .theme-toggle__icons :global(.theme-toggle__sun) {
+		opacity: 0;
+	}
+
+	:global(html.dark) .theme-toggle__icons :global(.theme-toggle__moon) {
+		opacity: 1;
+	}
+</style>
+
+<script>
+	const toggle = document.getElementById('theme-toggle');
+
+	const sync = () => {
+		const dark = document.documentElement.classList.contains('dark');
+		toggle?.setAttribute('aria-pressed', String(dark));
+		toggle?.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme');
+	};
+
+	toggle?.addEventListener('click', () => {
+		const dark = document.documentElement.classList.toggle('dark');
+		localStorage.setItem('sc-theme', dark ? 'dark' : 'light');
+		sync();
+	});
+
+	sync();
+</script>

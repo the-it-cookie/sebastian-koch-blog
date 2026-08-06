@@ -1,0 +1,49 @@
+---
+/**
+ * Inlines a hand-drawn category icon so it inherits `currentColor` —
+ * DESIGN_august.md §4 forbids loading these through <img>.
+ */
+import { topicIcon } from '../utils/topics';
+
+interface Props {
+	topic: string;
+	/** Rendered edge length in px. The drawings are tuned for 28–32. */
+	size?: number;
+	class?: string;
+}
+
+const icons = import.meta.glob<string>('../icons/categories/*.svg', {
+	query: '?raw',
+	import: 'default',
+	eager: true,
+});
+
+const { topic, size = 32, class: className } = Astro.props;
+
+const key = topicIcon(topic);
+const raw = icons[`../icons/categories/${key}.svg`] ?? icons['../icons/categories/default.svg'];
+const svg = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
+---
+
+<span
+	class:list={['category-icon', className]}
+	style={`--icon-size:${size}px`}
+	aria-hidden="true"
+	set:html={svg}
+/>
+
+<style>
+	.category-icon {
+		display: inline-flex;
+		width: var(--icon-size);
+		height: var(--icon-size);
+		flex-shrink: 0;
+		color: inherit;
+	}
+
+	.category-icon :global(svg) {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+</style>

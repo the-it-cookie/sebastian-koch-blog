@@ -1,0 +1,29 @@
+---
+/**
+ * DESIGN_august.md §6 — the numbered walkthrough. Semantically an <ol>; the
+ * numbers come from a CSS counter so steps can be added or reordered in the
+ * markup without renumbering anything by hand.
+ */
+
+interface Props {
+	class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<ol class:list={['method', className]}>
+	<slot />
+</ol>
+
+<style>
+	.method {
+		counter-reset: step;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 2.5rem;
+	}
+</style>

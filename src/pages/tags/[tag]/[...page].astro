@@ -1,0 +1,228 @@
+---
+/**
+ * Topic page — DESIGN_august.md §8.
+ *
+ * Calm head carrying the 64px category drawing, filter row of sibling topics,
+ * card grid, pagination. The empty state is the ground plus the drawing at 20%.
+ *
+ * Routed as [...page] so page 1 keeps the plain /tags/<topic>/ URL.
+ */
+import type { GetStaticPaths, Page } from 'astro';
+import ArticleCard from '../../../components/ArticleCard.astro';
+import Breadcrumb from '../../../components/Breadcrumb.astro';
+import CategoryChip from '../../../components/CategoryChip.astro';
+import CategoryIcon from '../../../components/CategoryIcon.astro';
+import CtaPanel from '../../../components/CtaPanel.astro';
+import Pagination from '../../../components/Pagination.astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { SITE_TITLE } from '../../../consts';
+import { getReadingTime } from '../../../utils/readingTime';
+import { slugifyTag } from '../../../utils/slugify';
+import { topicMeta } from '../../../utils/topics';
+import { getPublishedPosts } from '../../../utils/posts';
+
+export const getStaticPaths = (async ({ paginate }) => {
+	const posts = await getPublishedPosts();
+
+	const counts = new Map<string, number>();
+	for (const post of posts) {
+		for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+	}
+	const siblings = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+
+	return [...counts.keys()].flatMap((tagName) => {
+		const entries = posts
+			.filter((post) => post.data.tags.includes(tagName))
+			.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+			.map((post) => ({ ...post, readingTime: getReadingTime(post.body ?? '') }));
+
+		return paginate(entries, {
+			params: { tag: slugifyTag(tagName) },
+			props: { tagName, siblings },
+			pageSize: 9,
+		});
+	});
+}) satisfies GetStaticPaths;
+
+type Entry = Awaited<ReturnType<typeof getPublishedPosts>>[number] & { readingTime: number };
+
+interface Props {
+	tagName: string;
+	siblings: [string, number][];
+	page: Page<Entry>;
+}
+
+const { tagName, siblings, page } = Astro.props;
+const meta = topicMeta(tagName);
+const slug = slugifyTag(tagName);
+---
+
+<BaseLayout
+	title={`${tagName} | ${SITE_TITLE}`}
+	description={meta.blurb || `Articles tagged with ${tagName}.`}
+>
+	<div class="page-head">
+		<div class="container page-head__inner">
+			<Breadcrumb
+				items={[
+					{ label: 'Home', href: '/' },
+					{ label: 'Topics', href: '/tags' },
+					{ label: tagName },
+				]}
+				class="page-head__crumb"
+			/>
+			<CategoryIcon topic={tagName} size={64} class="page-head__icon" />
+			<h1>{tagName}</h1>
+			<p class="lead">{meta.blurb}</p>
+			<p class="meta">
+				{page.total} {page.total === 1 ? 'recipe' : 'recipes'}
+				{page.lastPage > 1 && ` · page ${page.currentPage} of ${page.lastPage}`}
+			</p>
+		</div>
+	</div>
+
+	{
+		siblings.length > 1 && (
+			<div class="filters">
+				<div class="container filters__inner">
+					<ul class="filters__list">
+						{siblings.map(([sibling]) => (
+							<li>
+								<CategoryChip topic={sibling} static={sibling === tagName} />
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+		)
+	}
+
+	<section class="section">
+		<div class="container stack" style="gap: 3rem">
+			{
+				page.data.length > 0 ? (
+					<div class="card-grid" data-reveal-group>
+						{page.data.map((post) => (
+							<ArticleCard
+								class="reveal"
+								headingLevel="h2"
+								title={post.data.title}
+								accent={post.data.accentWord}
+								description={post.data.description}
+								url={`/blog/${post.id}/`}
+								tags={post.data.tags}
+								heroImage={post.data.heroImage}
+								readingTime={post.readingTime}
+								difficulty={post.data.difficulty}
+								draft={post.data.draft}
+							/>
+						))}
+					</div>
+				) : (
+					<div class="empty">
+						<CategoryIcon topic={tagName} size={72} class="empty__icon" />
+						<p class="lead">Nothing is simmering here yet.</p>
+						<a href="/blog">Back to the full cookbook</a>
+					</div>
+				)
+			}
+
+			<Pagination
+				page={page.currentPage}
+				total={page.lastPage}
+				href={(n) => (n === 1 ? `/tags/${slug}/` : `/tags/${slug}/${n}/`)}
+			/>
+		</div>
+	</section>
+
+	<CtaPanel />
+</BaseLayout>
+
+<style>
+	.page-head {
+		background: var(--calm);
+		padding-block: 3rem 3.5rem;
+	}
+
+	.page-head__inner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		text-align: center;
+	}
+
+	.page-head :global(.page-head__crumb) {
+		align-self: center;
+	}
+
+	.page-head :global(.page-head__icon) {
+		color: var(--calm-text);
+	}
+
+	.page-head .lead {
+		max-width: 56ch;
+		color: var(--text);
+	}
+
+	.filters {
+		background: var(--bg);
+		border-bottom: 1px solid var(--hairline);
+	}
+
+	@media (min-width: 768px) {
+		.filters {
+			position: sticky;
+			top: 57px;
+			z-index: 20;
+		}
+	}
+
+	.filters__inner {
+		padding-block: 0.875rem;
+	}
+
+	.filters__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		gap: 0.5rem;
+		overflow-x: auto;
+		scrollbar-width: thin;
+	}
+
+	.card-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+
+	@media (min-width: 768px) {
+		.card-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (min-width: 1100px) {
+		.card-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	.empty {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		padding: 4rem 1.5rem;
+		border-radius: var(--radius-md);
+		background: var(--bg-band);
+		text-align: center;
+	}
+
+	.empty :global(.empty__icon) {
+		color: var(--text);
+		opacity: 0.2;
+	}
+</style>

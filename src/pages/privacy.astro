@@ -1,104 +1,119 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import { AUTHOR_NAME } from '../consts';
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead
-			title={`Privacy Policy | ${AUTHOR_NAME}`}
-			description="How this site handles data: hosting, comments, and why there is no cookie banner."
-		/>
-	</head>
-	<body>
-		<Header />
-		<main class="prose">
+<BaseLayout
+	title={`Privacy Policy | ${AUTHOR_NAME}`}
+	description="How this site handles data: hosting, comments, and why there is no cookie banner."
+>
+	<div class="page-head">
+		<div class="container page-head__inner">
+			<Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Privacy' }]} />
 			<h1>Privacy Policy</h1>
 			<p class="meta">
-				This applies regardless of the site's language, since the site is operated from Germany
-				and GDPR applies to the operator, not the visitor.
+				This applies regardless of the site's language, since the site is operated from Germany and
+				GDPR applies to the operator, not the visitor.
 			</p>
+		</div>
+	</div>
 
-			<h2>Responsible party</h2>
-			<p>
-				Sebastian Koch, Industriestraße 29, 82194 Gröbenzell, Germany.{' '}
-				<a href="mailto:sebastian.koch@consos.de">sebastian.koch@consos.de</a>. See the{' '}
-				<a href="/imprint">imprint</a> for full details.
-			</p>
+	<section class="section">
+		<div class="container">
+			<div class="prose">
+				<h2>Responsible party</h2>
+				<p>
+					Sebastian Koch, Industriestraße 29, 82194 Gröbenzell, Germany.{' '}
+					<a href="mailto:sebastian.koch@consos.de">sebastian.koch@consos.de</a>. See the{' '}
+					<a href="/imprint">imprint</a> for full details.
+				</p>
 
-			<h2>Hosting</h2>
-			<p>
-				This site is hosted on Cloudflare's network. Like any web host, Cloudflare processes
-				technical connection data for every request, such as IP address, browser type, and
-				timestamp, in order to deliver the site and to protect it against abuse. This happens
-				automatically and is not something this site's code controls directly. Cloudflare acts as
-				a data processor here and publishes its own{' '}
-				<a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener noreferrer"
-					>privacy policy</a
-				> and data processing terms, including safeguards for international data transfers.
-			</p>
+				<h2>Hosting</h2>
+				<p>
+					This site is hosted on Cloudflare's network. Like any web host, Cloudflare processes
+					technical connection data for every request, such as IP address, browser type, and
+					timestamp, in order to deliver the site and to protect it against abuse. This happens
+					automatically and is not something this site's code controls directly. Cloudflare acts
+					as a data processor here and publishes its own{' '}
+					<a
+						href="https://www.cloudflare.com/privacypolicy/"
+						target="_blank"
+						rel="noopener noreferrer">privacy policy</a
+					> and data processing terms, including safeguards for international data transfers.
+				</p>
 
-			<h2>Fonts</h2>
-			<p>
-				This site uses IBM Plex fonts, downloaded once at build time and served from this site's
-				own domain. Your browser never contacts Google or any other font provider when you visit
-				this site.
-			</p>
+				<h2>Fonts</h2>
+				<p>
+					This site uses the Newsreader, Work Sans and JetBrains Mono typefaces, downloaded once
+					at build time and served from this site's own domain. Your browser never contacts Google
+					or any other font provider when you visit this site.
+				</p>
 
-			<h2>Comments</h2>
-			<p>
-				Articles have an optional comment section. If you post a comment, the name you choose to
-				enter, the comment text, and the time of posting are stored in a Cloudflare D1 database so
-				the comment can be displayed. I do not store your IP address alongside comments. New
-				comments are held in a private moderation queue and only become publicly visible after I
-				review them; rejected comments are deleted rather than published.
-			</p>
-			<p>
-				The comment form is protected by Cloudflare Turnstile, a captcha alternative that helps
-				block automated spam. The Turnstile script only loads on article pages that show a comment
-				form, not sitewide, and only runs when you interact with the form. Your browser sends your
-				IP address to Cloudflare as part of that verification; this site does not receive or store
-				it. Turnstile is used because it is necessary to provide the commenting feature you are
-				actively using, not for tracking.
-			</p>
+				<h2>Theme preference</h2>
+				<p>
+					If you switch between the light and dark theme, that choice is saved in your browser's
+					local storage under the key <code>sc-theme</code>. It stays on your device, is never
+					sent to a server, and exists only so the site does not forget your preference between
+					visits. Clearing your browser storage removes it.
+				</p>
 
-			<h2>No analytics, no advertising</h2>
-			<p>
-				This site runs no analytics, advertising, or marketing scripts, and sets no tracking
-				cookies. Because of that, there is no cookie consent banner: nothing non-essential is
-				loaded that would require your consent under the ePrivacy rules. If that ever changes,
-				this page and a consent mechanism will be updated accordingly.
-			</p>
+				<h2>Comments</h2>
+				<p>
+					Articles have an optional comment section. If you post a comment, the name you choose to
+					enter, the comment text, and the time of posting are stored in a Cloudflare D1 database
+					so the comment can be displayed. I do not store your IP address alongside comments. New
+					comments are held in a private moderation queue and only become publicly visible after I
+					review them; rejected comments are deleted rather than published.
+				</p>
+				<p>
+					The comment form is protected by Cloudflare Turnstile, a captcha alternative that helps
+					block automated spam. The Turnstile script only loads on article pages that show a
+					comment form, not sitewide, and only runs when you interact with the form. Your browser
+					sends your IP address to Cloudflare as part of that verification; this site does not
+					receive or store it. Turnstile is used because it is necessary to provide the commenting
+					feature you are actively using, not for tracking.
+				</p>
 
-			<h2>External links</h2>
-			<p>
-				Where articles link to external sites (for example, Microsoft's documentation), those
-				sites have their own privacy policies that this policy does not cover.
-			</p>
+				<h2>No analytics, no advertising</h2>
+				<p>
+					This site runs no analytics, advertising, or marketing scripts, and sets no tracking
+					cookies. Because of that, there is no cookie consent banner: nothing non-essential is
+					loaded that would require your consent under the ePrivacy rules. If that ever changes,
+					this page and a consent mechanism will be updated accordingly.
+				</p>
 
-			<h2>Your rights</h2>
-			<p>
-				Under GDPR you have the right to access, correct, or delete data concerning you, to
-				restrict or object to its processing, and to data portability. If you posted a comment and
-				want it edited or removed, email{' '}
-				<a href="mailto:sebastian.koch@consos.de">sebastian.koch@consos.de</a> with a link to the
-				page and I will take care of it. You also have the right to lodge a complaint with a data
-				protection supervisory authority.
-			</p>
-		</main>
-		<Footer />
-	</body>
-</html>
+				<h2>External links</h2>
+				<p>
+					Where articles link to external sites (for example, Microsoft's documentation), those
+					sites have their own privacy policies that this policy does not cover.
+				</p>
+
+				<h2>Your rights</h2>
+				<p>
+					Under GDPR you have the right to access, correct, or delete data concerning you, to
+					restrict or object to its processing, and to data portability. If you posted a comment
+					and want it edited or removed, email{' '}
+					<a href="mailto:sebastian.koch@consos.de">sebastian.koch@consos.de</a> with a link to the
+					page and I will take care of it. You also have the right to lodge a complaint with a data
+					protection supervisory authority.
+				</p>
+			</div>
+		</div>
+	</section>
+</BaseLayout>
 
 <style>
-	main.prose {
-		width: 720px;
-		max-width: calc(100% - 2em);
-		margin: auto;
-		padding: 3em 1em;
-		color: rgb(var(--gray-dark));
+	.page-head {
+		background: var(--bg-band);
+		border-bottom: 1px solid var(--hairline);
+		padding-block: 2.5rem 3rem;
+	}
+
+	.page-head__inner {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-width: 62ch;
 	}
 </style>

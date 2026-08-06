@@ -1,0 +1,109 @@
+---
+/**
+ * The wordmark (DESIGN_august.md §6): purely typographic, with a chef's hat
+ * standing in for the dot on the i.
+ *
+ * The i is set as a dotless ı so the hat can take its place; the visible
+ * lettering is therefore hidden from assistive tech and the accessible name
+ * comes from the sr-only span.
+ */
+
+interface Props {
+	/** `compact` drops the sub-label — used in the condensed sticky header. */
+	variant?: 'full' | 'compact';
+	class?: string;
+}
+
+const { variant = 'full', class: className } = Astro.props;
+---
+
+<a class:list={['wordmark', `wordmark--${variant}`, className]} href="/">
+	<span class="sr-only">Sebastian Cook — home</span>
+	<span class="wordmark__line" aria-hidden="true">
+		<span class="wordmark__first"
+			>Sebast<span class="wordmark__i"
+				>&#x0131;<svg
+					class="wordmark__toque"
+					viewBox="0 0 20 16"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.6"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path
+						d="M5.1 8.9C3.2 8.6 2 7.1 2.3 5.4 2.6 3.7 4.2 2.7 5.9 3 6.5 1.4 8.2.4 10.1.6c1.8.2 3.3 1.4 3.6 2.9 1.7-.2 3.3 1 3.5 2.7.2 1.7-.9 3.1-2.6 3.4"
+					></path>
+					<path d="M5.2 8.8c.2 1.6.3 3.2.2 4.8 3.1.5 6.2.5 9.3 0-.2-1.6-.1-3.2.1-4.8"></path>
+				</svg></span
+			>an</span
+		>
+		<em class="wordmark__last">Cook</em>
+	</span>
+	{variant === 'full' && <span class="wordmark__sub" aria-hidden="true">D365 · Power Platform</span>}
+</a>
+
+<style>
+	.wordmark {
+		display: inline-flex;
+		flex-direction: column;
+		gap: 0.15rem;
+		text-decoration: none;
+		color: var(--text);
+	}
+
+	.wordmark:hover {
+		color: var(--text);
+	}
+
+	.wordmark__line {
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.3em;
+		font-family: var(--font-display);
+		font-size: 1.5rem;
+		font-weight: 500;
+		line-height: 1.1;
+		letter-spacing: -0.01em;
+	}
+
+	.wordmark--compact .wordmark__line {
+		font-size: 1.25rem;
+	}
+
+	.wordmark__i {
+		position: relative;
+	}
+
+	.wordmark__toque {
+		position: absolute;
+		left: 50%;
+		bottom: 0.72em;
+		width: 1.05em;
+		height: 0.84em;
+		transform: translateX(-50%);
+		color: var(--signal);
+		overflow: visible;
+	}
+
+	.wordmark__last {
+		font-style: italic;
+		color: var(--signal);
+	}
+
+	.wordmark__sub {
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		font-weight: 500;
+		letter-spacing: 0.18em;
+		text-transform: uppercase;
+		white-space: nowrap;
+		color: var(--text-soft);
+	}
+
+	@media (max-width: 420px) {
+		.wordmark__line {
+			font-size: 1.3rem;
+		}
+	}
+</style>

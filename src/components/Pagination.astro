@@ -1,0 +1,97 @@
+---
+/**
+ * DESIGN_august.md §6.
+ */
+import Icon from './Icon.astro';
+
+interface Props {
+	page: number;
+	total: number;
+	/** Given a page number, returns its URL. */
+	href: (page: number) => string;
+	class?: string;
+}
+
+const { page, total, href, class: className } = Astro.props;
+const pages = Array.from({ length: total }, (_, i) => i + 1);
+---
+
+{
+	total > 1 && (
+		<nav class:list={['pagination', className]} aria-label="Pagination">
+			<a
+				class="pagination__step"
+				href={page > 1 ? href(page - 1) : undefined}
+				aria-disabled={page === 1 ? 'true' : undefined}
+			>
+				<Icon name="chevron-left" size={18} />
+				<span class="sr-only">Previous page</span>
+			</a>
+
+			<ol>
+				{pages.map((n) => (
+					<li>
+						<a href={href(n)} aria-current={n === page ? 'page' : undefined}>
+							{String(n).padStart(2, '0')}
+						</a>
+					</li>
+				))}
+			</ol>
+
+			<a
+				class="pagination__step"
+				href={page < total ? href(page + 1) : undefined}
+				aria-disabled={page === total ? 'true' : undefined}
+			>
+				<span class="sr-only">Next page</span>
+				<Icon name="chevron-right" size={18} />
+			</a>
+		</nav>
+	)
+}
+
+<style>
+	.pagination {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.75rem;
+	}
+
+	.pagination ol {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		gap: 0.25rem;
+	}
+
+	.pagination a {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 44px;
+		height: 44px;
+		border-radius: var(--radius-sm);
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		letter-spacing: 0.02em;
+		text-decoration: none;
+		color: var(--text-soft);
+	}
+
+	.pagination a:hover {
+		color: var(--signal-text);
+		background: var(--bg-band);
+	}
+
+	.pagination a[aria-current='page'] {
+		color: var(--on-signal);
+		background: var(--signal-fill);
+	}
+
+	.pagination a[aria-disabled='true'] {
+		opacity: 0.35;
+		pointer-events: none;
+	}
+</style>

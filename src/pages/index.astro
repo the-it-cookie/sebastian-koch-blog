@@ -1,131 +1,385 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import FormattedDate from '../components/FormattedDate.astro';
-import Header from '../components/Header.astro';
-import { AUTHOR_NAME, SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+/**
+ * Home — DESIGN_august.md §8.
+ *
+ * Hero · topics grid · fresh from the kitchen · the pass (the one dark
+ * section, deliberately breaking the rhythm) · about in three lines · CTA.
+ */
+import { Image } from 'astro:assets';
+import profilePhoto from '../assets/profile.jpg';
+import ArticleCard from '../components/ArticleCard.astro';
+import Button from '../components/Button.astro';
+import CategoryIcon from '../components/CategoryIcon.astro';
+import CodeBlock from '../components/CodeBlock.astro';
+import CtaPanel from '../components/CtaPanel.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import { getReadingTime } from '../utils/readingTime';
 import { slugifyTag } from '../utils/slugify';
+import { getPublishedPosts } from '../utils/posts';
 
-const allPosts = await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft);
-const latestPosts = allPosts
+const allPosts = await getPublishedPosts();
+
+const latest = allPosts
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
-	.slice(0, 5);
+	.slice(0, 6)
+	.map((post) => ({ ...post, readingTime: getReadingTime(post.body ?? '') }));
 
-const tagCounts = new Map<string, number>();
+const counts = new Map<string, number>();
 for (const post of allPosts) {
-	for (const tag of post.data.tags) {
-		tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
-	}
+	for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
 }
-const topics = [...tagCounts.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+const topics = [...counts.entries()]
+	.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+	.slice(0, 8);
+
+const SNIPPET = `# Count opt-ins per purpose before a campaign goes out
+$purposes = Get-CrmRecords -EntityLogicalName msdynmkt_purpose \`
+  -Fields msdynmkt_name, msdynmkt_purposeid
+
+foreach ($purpose in $purposes.CrmRecords) {
+  $optIns = Get-CrmRecords \`
+    -EntityLogicalName msdynmkt_contactpointconsent3 \`
+    -FilterAttribute msdynmkt_purposeid \`
+    -FilterOperator eq \`
+    -FilterValue $purpose.msdynmkt_purposeid
+
+  "{0,-34} {1,5} opt-ins" -f $purpose.msdynmkt_name, $optIns.Count
+}`;
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			.hero {
-				text-align: center;
-				padding: 2em 0 3em 0;
-			}
-			.hero h1 {
-				margin-bottom: 0.4em;
-			}
-			.hero p.intro {
-				margin: 0;
-				font-size: 1.25em;
-				color: rgb(var(--gray-dark));
-			}
-			.hero p.pointer {
-				margin: 0.8em 0 0 0;
-				font-size: 0.95em;
-				color: rgb(var(--gray));
-			}
-			h2.section-title {
-				border-bottom: 1px solid var(--border);
-				padding-bottom: 0.3em;
-			}
-			.topics {
-				margin-top: 2.5em;
-			}
-			ul.post-list {
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-				display: flex;
-				flex-direction: column;
-				gap: 1em;
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section class="hero">
-				<h1>{AUTHOR_NAME}</h1>
-				<p class="intro">
-					I collect my CRM and Power Platform recipes here, hope you find something worth
-					tasting, too :)
+<BaseLayout title={SITE_TITLE} description={SITE_DESCRIPTION}>
+	<!-- 1. Hero -->
+	<section class="section hero">
+		<div class="container hero__inner">
+			<div class="hero__text">
+				<p class="label">Welcome to the kitchen</p>
+				<h1 class="t-display">
+					Power Platform recipes that hold up <em>outside</em> the demo
+				</h1>
+				<p class="lead">
+					I am Sebastian. I build Dynamics 365 and Power Platform solutions for a living and write
+					down the ones that survived production — including the parts that burned first.
 				</p>
-				<p class="pointer">
-					New here? <a href="/about">The About page</a> or{' '}
-					<a href="/blog/why-this-site-is-a-cookbook/">the first recipe</a> will give you a feel
-					for what this is.
+				<div class="hero__actions">
+					<Button variant="primary" href="/blog">Browse the recipes</Button>
+					<Button variant="ghost" href="/about">What is this place?</Button>
+				</div>
+			</div>
+
+			<div class="hero__media">
+				<Image
+					src={profilePhoto}
+					alt="Sebastian Koch"
+					width={720}
+					height={720}
+					loading="eager"
+					class="hero__image"
+				/>
+			</div>
+		</div>
+	</section>
+
+	<!-- 2. Topics -->
+	{
+		topics.length > 0 && (
+			<section class="section">
+				<div class="container stack" style="gap: 2.5rem">
+					<SectionHeader
+						kicker="The menu"
+						title="Pick a section of the kitchen"
+						accent="section"
+						linkHref="/tags"
+						linkLabel="All topics"
+					/>
+
+					{/* The reveal sits on the grid, not the cells: the grid's own
+					    background is the hairline colour that draws the rules, so
+					    fading the cells individually would flash a solid block. */}
+					<div class="topics-grid reveal">
+						{topics.map(([tag, count]) => (
+							<a class="topic" href={`/tags/${slugifyTag(tag)}/`}>
+								<CategoryIcon topic={tag} size={40} class="topic__icon" />
+								<span class="label topic__name">{tag}</span>
+								<span class="meta">
+									{count} {count === 1 ? 'recipe' : 'recipes'}
+								</span>
+							</a>
+						))}
+					</div>
+				</div>
+			</section>
+		)
+	}
+
+	<!-- 3. Latest -->
+	<section class="section section--band">
+		<div class="container stack" style="gap: 2.5rem">
+			<SectionHeader
+				kicker="Fresh from the kitchen"
+				title="Most recently plated up"
+				accent="recently"
+				linkHref="/blog"
+				linkLabel="The full cookbook"
+			/>
+
+			<div class="card-grid" data-reveal-group>
+				{
+					latest.map((post) => (
+						<ArticleCard
+							class="reveal"
+							title={post.data.title}
+							accent={post.data.accentWord}
+							description={post.data.description}
+							url={`/blog/${post.id}/`}
+							tags={post.data.tags}
+							heroImage={post.data.heroImage}
+							readingTime={post.readingTime}
+							difficulty={post.data.difficulty}
+							draft={post.data.draft}
+						/>
+					))
+				}
+			</div>
+		</div>
+	</section>
+
+	<!-- 4. The pass — the IT counterpoint, and the only dark band on the page -->
+	<section class="section section--ink pass">
+		<div class="container pass__inner">
+			<div class="pass__text">
+				<p class="label">From the pass</p>
+				<h2>Low-code until it <em>isn't</em></h2>
+				<p>
+					Most of what I write about starts in the maker portal and ends in a script, a plugin or
+					a custom API — because that is where the awkward requirements actually get solved.
+					Recipes here show both halves, not just the clickable one.
 				</p>
-			</section>
-			<section>
-				<h2 class="section-title">Fresh from the kitchen</h2>
-				<ul class="post-list">
-					{
-						latestPosts.map((post) => (
-							<li>
-								<div class="card">
-									<h3 class="title">
-										<a class="card-link" href={`/blog/${post.id}/`}>
-											{post.data.title}
-										</a>
-									</h3>
-									<p class="meta">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-									<p class="description">{post.data.description}</p>
-									{post.data.tags.length > 0 && (
-										<ul class="tag-list">
-											{post.data.tags.map((tag) => (
-												<li>
-													<a href={`/tags/${slugifyTag(tag)}/`}>{tag}</a>
-												</li>
-											))}
-										</ul>
-									)}
-									<p class="read-more">
-										Read article <span class="arrow">&rarr;</span>
-									</p>
-								</div>
-							</li>
-						))
-					}
-				</ul>
-			</section>
-			{
-				topics.length > 0 && (
-					<section class="topics">
-						<h2 class="section-title">Browse by topic</h2>
-						<ul class="tag-list">
-							{topics.map(([tag, count]) => (
-								<li>
-									<a href={`/tags/${slugifyTag(tag)}/`}>
-										{tag} ({count})
-									</a>
-								</li>
-							))}
-						</ul>
-					</section>
-				)
-			}
-		</main>
-		<Footer />
-	</body>
-</html>
+				<Button variant="secondary" href="/tags/power-automate/">Recipes with code in them</Button>
+			</div>
+
+			<div class="pass__code">
+				<CodeBlock code={SNIPPET} lang="powershell" filename="count-optins.ps1" />
+			</div>
+		</div>
+	</section>
+
+	<!-- 5. About, short -->
+	<section class="section">
+		<div class="container about-strip">
+			<Image
+				src={profilePhoto}
+				alt="Sebastian Koch"
+				width={200}
+				height={200}
+				loading="lazy"
+				class="about-strip__avatar"
+			/>
+			<div class="about-strip__text">
+				<p class="label">The cook</p>
+				<h2>Koch is German for <em>cook</em></h2>
+				<p class="lead">
+					Industrial engineer by training, Power Platform consultant by trade, generalist by
+					nature. Based in Munich, deepest in Customer Insights - Journeys and consent.
+				</p>
+				<Button variant="ghost" href="/about">Read the longer version</Button>
+			</div>
+		</div>
+	</section>
+
+	<CtaPanel />
+</BaseLayout>
+
+<style>
+	/* --- Hero --- */
+	.hero__inner {
+		display: grid;
+		grid-template-columns: 1fr;
+		align-items: center;
+		gap: 3rem;
+	}
+
+	@media (min-width: 900px) {
+		.hero__inner {
+			grid-template-columns: 55fr 45fr;
+			gap: 4rem;
+		}
+	}
+
+	.hero__text {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+
+	.hero__actions {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+		margin-top: 0.5rem;
+	}
+
+	/* The calm block sits 8px behind the photo — offset, never rotated (§8). */
+	.hero__media {
+		position: relative;
+		isolation: isolate;
+	}
+
+	.hero__media::before {
+		content: '';
+		position: absolute;
+		inset: 8px -8px -8px 8px;
+		border-radius: var(--radius-lg);
+		background: var(--calm);
+		z-index: -1;
+	}
+
+	.hero__media :global(.hero__image) {
+		display: block;
+		width: 100%;
+		height: auto;
+		/* Square once it sits beside the text; letterboxed while it is stacked
+		   above it, so the photo does not swallow a whole tablet screen. */
+		aspect-ratio: 4 / 3;
+		object-fit: cover;
+		border-radius: var(--radius-lg);
+		border: 1px solid var(--hairline);
+	}
+
+	@media (min-width: 900px) {
+		.hero__media :global(.hero__image) {
+			aspect-ratio: 1 / 1;
+		}
+	}
+
+	/* --- Topics grid --- */
+	.topics-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1px;
+		background: var(--hairline);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
+		overflow: hidden;
+	}
+
+	@media (min-width: 768px) {
+		.topics-grid {
+			grid-template-columns: repeat(4, 1fr);
+		}
+	}
+
+	.topic {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.6rem;
+		padding: 2rem 1rem;
+		background: var(--bg);
+		text-align: center;
+		text-decoration: none;
+		color: var(--text);
+		transition: background-color var(--dur-base) var(--ease-out);
+	}
+
+	.topic:hover {
+		background: var(--calm);
+		color: var(--text);
+	}
+
+	.topic :global(.topic__icon) {
+		color: var(--calm-text);
+		transition: color var(--dur-base) var(--ease-out);
+	}
+
+	.topic:hover :global(.topic__icon) {
+		color: var(--signal);
+	}
+
+	.topic__name {
+		color: var(--text);
+	}
+
+	/* --- Card grid --- */
+	.card-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+
+	@media (min-width: 768px) {
+		.card-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (min-width: 1100px) {
+		.card-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	/* --- The pass --- */
+	.pass {
+		--text: var(--color-paper);
+		--text-soft: #a79eb0;
+		--signal: #ff7a68;
+		--signal-text: #ff7a68;
+		--emphasis-border: #6b6076;
+		--hairline: var(--color-line-dark);
+	}
+
+	.pass__inner {
+		display: grid;
+		grid-template-columns: 1fr;
+		align-items: center;
+		gap: 2.5rem;
+	}
+
+	@media (min-width: 900px) {
+		.pass__inner {
+			grid-template-columns: 1fr 1fr;
+			gap: 4rem;
+		}
+	}
+
+	.pass__text {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 1rem;
+		color: var(--text-soft);
+	}
+
+	.pass__code {
+		min-width: 0;
+	}
+
+	/* --- About strip --- */
+	.about-strip {
+		display: flex;
+		align-items: center;
+		gap: 2rem;
+		flex-wrap: wrap;
+	}
+
+	.about-strip :global(.about-strip__avatar) {
+		width: 120px;
+		height: 120px;
+		border-radius: var(--radius-full);
+		object-fit: cover;
+		flex-shrink: 0;
+	}
+
+	.about-strip__text {
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.75rem;
+		flex: 1;
+		min-width: 18rem;
+		max-width: 60ch;
+	}
+</style>

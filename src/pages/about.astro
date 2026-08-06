@@ -1,168 +1,200 @@
 ---
 import { Image } from 'astro:assets';
 import profilePhoto from '../assets/profile.jpg';
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import CtaPanel from '../components/CtaPanel.astro';
 import TechStack from '../components/TechStack.astro';
+import Sprig from '../components/ornaments/Sprig.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import { AUTHOR_IDENTITY_LINE, AUTHOR_NAME, SITE_TAGLINE } from '../consts';
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead
-			title={`About | ${AUTHOR_NAME}`}
-			description="Sebastian Koch: Power Platform and Dynamics 365 consultant based in Munich, sharing practical recipes from real Customer Insights - Journeys and GDPR-consent projects."
-			image={profilePhoto}
-		/>
-	</head>
-	<body>
-		<Header />
-		<main class="prose">
-			<div class="intro">
-				<button type="button" id="avatar-trigger" aria-label={`View larger photo of ${AUTHOR_NAME}`}>
-					<Image src={profilePhoto} alt={AUTHOR_NAME} width={160} height={160} class="avatar" />
-				</button>
-				<h1>About</h1>
+<BaseLayout
+	title={`About | ${AUTHOR_NAME}`}
+	description="Sebastian Koch: Power Platform and Dynamics 365 consultant based in Munich, sharing practical recipes from real Customer Insights - Journeys and GDPR-consent projects."
+	image={profilePhoto}
+>
+	<div class="page-head">
+		<div class="container page-head__inner">
+			<div class="page-head__text">
+				<Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'About' }]} />
+				<p class="label">The cook</p>
+				<h1>Koch is German for <em>cook</em></h1>
+				<p class="lead">{AUTHOR_IDENTITY_LINE}</p>
 			</div>
-			<p>
-				My last name is Koch. In German, that is simply the word for cook. Translate it, and
-				Sebastian Koch becomes Sebastian Cook, which is exactly where the name of this site comes
-				from.
-			</p>
-			<p>
-				The kitchen metaphor stuck around, because it fits the work better than I expected: figure
-				something out once, test it properly, then write down the <strong>recipe</strong> so the
-				next person can follow it without the detours.
-			</p>
-			<p>
-				I am Sebastian, an industrial engineer by training and a consultant by trade, based in
-				Munich. I studied Wirtschaftsingenieurwesen in Bayreuth, which is a long German word for
-				someone taught to sit between engineering and business and translate one into the other.
-				That is still what I do most days.
-			</p>
-			<p>
-				I am, happily, a bit of a generalist. Jack of all trades, master of none, but as the rest
-				of that saying goes, oftentimes better than a master of one. In a given week I might sketch
-				a solution architecture, wire up a Power Automate flow, write a plugin or a piece of form
-				JavaScript, untangle a consent model, and then stand at a whiteboard arguing about
-				strategy. I like the range. The common thread is that I look at the whole process, not
-				just the screen in front of me.
-			</p>
-			<p>
-				My home base is the Microsoft Power Platform and Dynamics 365, from model-driven apps and
-				Dataverse to Copilot Studio. Where I currently go deepest is marketing automation with
-				Customer Insights - Journeys: consent, double opt-in, real-time journeys, and the custom
-				tables, plugins and flows that make it hold up in production and under GDPR. Depth where it
-				counts, on a base that stays broad.
-			</p>
-			<p>
-				Before consulting I spent a lot of time in student initiatives and case competitions,
-				including winning the finals of Germany's largest student case study competition with my
-				team. That taught me two things no certification does: how to think under pressure, and
-				that the best solutions get argued out with good people, not handed down.
-			</p>
-			<p>
-				This site is my <strong>cookbook</strong>. <strong>Recipes</strong> from real projects:
-				practical Power Platform and Dynamics 365 patterns, the consent and compliance details most
-				people skip, how I put AI to work without cutting corners on data protection, and the traps
-				that cost me hours so they cost you less. Some posts are deep dives, some are quick notes.
-				All of them come from something I actually had to solve.
-			</p>
-			<p>
-				{AUTHOR_IDENTITY_LINE} {SITE_TAGLINE}.
-			</p>
-			<TechStack />
-		</main>
-		<Footer />
-		<dialog id="avatar-dialog">
-			<button type="button" id="avatar-dialog-close" aria-label="Close">&times;</button>
-			<Image src={profilePhoto} alt={AUTHOR_NAME} width={640} height={640} />
-		</dialog>
-	</body>
-</html>
+
+			<button
+				type="button"
+				id="avatar-trigger"
+				aria-label={`View a larger photo of ${AUTHOR_NAME}`}
+			>
+				<Image src={profilePhoto} alt={AUTHOR_NAME} width={320} height={320} class="avatar" />
+			</button>
+		</div>
+	</div>
+
+	<section class="section">
+		<div class="container">
+			<div class="prose prose--article">
+				<p>
+					My last name is Koch. In German, that is simply the word for cook. Translate it, and
+					Sebastian Koch becomes Sebastian Cook, which is exactly where the name of this site comes
+					from.
+				</p>
+				<p>
+					The kitchen metaphor stuck around, because it fits the work better than I expected:
+					figure something out once, test it properly, then write down the <strong>recipe</strong> so
+					the next person can follow it without the detours.
+				</p>
+				<p>
+					I am Sebastian, an industrial engineer by training and a consultant by trade, based in
+					Munich. I studied Wirtschaftsingenieurwesen in Bayreuth, which is a long German word for
+					someone taught to sit between engineering and business and translate one into the other.
+					That is still what I do most days.
+				</p>
+				<p>
+					I am, happily, a bit of a generalist. Jack of all trades, master of none, but as the rest
+					of that saying goes, oftentimes better than a master of one. In a given week I might
+					sketch a solution architecture, wire up a Power Automate flow, write a plugin or a piece
+					of form JavaScript, untangle a consent model, and then stand at a whiteboard arguing about
+					strategy. I like the range. The common thread is that I look at the whole process, not
+					just the screen in front of me.
+				</p>
+				<p>
+					My home base is the Microsoft Power Platform and Dynamics 365, from model-driven apps and
+					Dataverse to Copilot Studio. Where I currently go deepest is marketing automation with
+					Customer Insights - Journeys: consent, double opt-in, real-time journeys, and the custom
+					tables, plugins and flows that make it hold up in production and under GDPR. Depth where
+					it counts, on a base that stays broad.
+				</p>
+				<p>
+					Before consulting I spent a lot of time in student initiatives and case competitions,
+					including winning the finals of Germany's largest student case study competition with my
+					team. That taught me two things no certification does: how to think under pressure, and
+					that the best solutions get argued out with good people, not handed down.
+				</p>
+				<p>
+					This site is my <strong>cookbook</strong>. <strong>Recipes</strong> from real projects:
+					practical Power Platform and Dynamics 365 patterns, the consent and compliance details
+					most people skip, how I put AI to work without cutting corners on data protection, and the
+					traps that cost me hours so they cost you less. Some posts are deep dives, some are quick
+					notes. All of them come from something I actually had to solve.
+				</p>
+				<p>{SITE_TAGLINE}.</p>
+
+				<TechStack />
+
+				<div class="about__end">
+					<Sprig width={120} />
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<CtaPanel
+		title="Got a problem that looks like one of these?"
+		accent="problem"
+		lead="If something here helped, or you are stuck on a variant of it, I would genuinely like to hear about it."
+	/>
+
+	<dialog id="avatar-dialog">
+		<button type="button" id="avatar-dialog-close" aria-label="Close">&times;</button>
+		<Image src={profilePhoto} alt={AUTHOR_NAME} width={640} height={640} />
+	</dialog>
+</BaseLayout>
 
 <style>
-	main.prose {
-		width: 720px;
-		max-width: calc(100% - 2em);
-		margin: auto;
-		padding: 3em 1em;
-		color: rgb(var(--gray-dark));
+	.page-head {
+		background: var(--calm);
+		padding-block: 3rem 3.5rem;
 	}
-	.intro {
+
+	.page-head__inner {
 		display: flex;
 		align-items: center;
-		gap: 1.5em;
-		margin-bottom: 1em;
+		justify-content: space-between;
+		gap: 2.5rem;
+		flex-wrap: wrap;
 	}
-	.intro :global(.avatar) {
-		width: 100px;
-		height: 100px;
-		border-radius: 999px;
-		object-fit: cover;
-		border: 1px solid var(--border);
-		flex-shrink: 0;
+
+	.page-head__text {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-width: 52ch;
+		flex: 1;
+		min-width: 16rem;
 	}
-	.intro h1 {
-		margin: 0;
-	}
+
 	#avatar-trigger {
-		background: none;
-		border: none;
 		padding: 0;
-		border-radius: 999px;
+		border: none;
+		border-radius: var(--radius-full);
+		background: none;
 		cursor: zoom-in;
 		flex-shrink: 0;
 	}
+
+	#avatar-trigger :global(.avatar) {
+		display: block;
+		width: 160px;
+		height: 160px;
+		border-radius: var(--radius-full);
+		object-fit: cover;
+		border: 1px solid var(--hairline);
+		transition: opacity var(--dur-fast) var(--ease-out);
+	}
+
 	#avatar-trigger:hover :global(.avatar) {
 		opacity: 0.85;
 	}
+
+	.about__end {
+		display: flex;
+		justify-content: center;
+		padding-top: 1rem;
+	}
+
 	#avatar-dialog {
 		border: none;
-		border-radius: 12px;
+		border-radius: var(--radius-md);
 		padding: 0;
 		max-width: min(90vw, 640px);
 		max-height: 90vh;
 		background: var(--surface);
 	}
+
 	#avatar-dialog::backdrop {
-		background: rgba(0, 0, 0, 0.6);
+		background: rgb(26 21 32 / 0.6);
 	}
+
 	#avatar-dialog :global(img) {
 		display: block;
 		max-width: 100%;
 		max-height: 90vh;
 		height: auto;
-		border-radius: 12px;
+		border-radius: var(--radius-md);
 	}
+
 	#avatar-dialog-close {
 		position: absolute;
-		top: 0.5em;
-		right: 0.5em;
-		width: 2em;
-		height: 2em;
-		border-radius: 999px;
+		top: 0.5rem;
+		right: 0.5rem;
+		width: 2.25rem;
+		height: 2.25rem;
+		border-radius: var(--radius-full);
 		border: none;
-		background: rgba(0, 0, 0, 0.5);
+		background: rgb(26 21 32 / 0.55);
 		color: #fff;
-		font-size: 1.2em;
+		font-size: 1.2rem;
 		line-height: 1;
 		cursor: pointer;
-	}
-	@media (max-width: 480px) {
-		.intro {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 1em;
-		}
 	}
 </style>
 
 <script>
 	const trigger = document.getElementById('avatar-trigger');
-	const dialog = document.getElementById('avatar-dialog') as HTMLDialogElement;
+	const dialog = document.getElementById('avatar-dialog') as HTMLDialogElement | null;
 	const closeBtn = document.getElementById('avatar-dialog-close');
 
 	trigger?.addEventListener('click', () => dialog?.showModal());

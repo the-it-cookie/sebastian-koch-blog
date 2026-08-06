@@ -1,108 +1,302 @@
 ---
+/**
+ * The recipe page — DESIGN_august.md §8.
+ *
+ * Breadcrumb · title block · hero · ingredients · body (drop cap on the first
+ * paragraph) · sprig sign-off · author · from the leftovers · CTA.
+ *
+ * From lg the layout is a three-column grid so the table of contents can sit
+ * in the right margin while the text column stays exactly where it was.
+ */
 import { Image } from 'astro:assets';
 import type { CollectionEntry } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
+import type { MarkdownHeading } from 'astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import AccentHeading from '../components/AccentHeading.astro';
+import AuthorBox from '../components/AuthorBox.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import CategoryChip from '../components/CategoryChip.astro';
 import Comments from '../components/Comments.astro';
-import Footer from '../components/Footer.astro';
+import CtaPanel from '../components/CtaPanel.astro';
 import FormattedDate from '../components/FormattedDate.astro';
-import Header from '../components/Header.astro';
-import { slugifyTag } from '../utils/slugify';
+import Ingredients from '../components/Ingredients.astro';
+import SectionHeader from '../components/SectionHeader.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import Toque from '../components/Toque.astro';
+import Sprig from '../components/ornaments/Sprig.astro';
+import BaseLayout from './BaseLayout.astro';
+import { AUTHOR_NAME } from '../consts';
+import { getReadingTime } from '../utils/readingTime';
+import { getPublishedPosts } from '../utils/posts';
 
-type Props = CollectionEntry<'blog'>['data'] & { readingTime: number; slug: string };
+type Props = CollectionEntry<'blog'>['data'] & {
+	readingTime: number;
+	slug: string;
+	headings: MarkdownHeading[];
+};
 
-const { title, description, pubDate, updatedDate, heroImage, tags, readingTime, slug } = Astro.props;
+const {
+	title,
+	accentWord,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	tags,
+	difficulty,
+	ingredients,
+	readingTime,
+	slug,
+	headings,
+} = Astro.props;
+
+const topic = tags?.[0];
+
+// "From the leftovers" — nearest neighbours by shared tags, newest first.
+const all = await getPublishedPosts();
+const related = all
+	.filter((post) => post.id !== slug)
+	.map((post) => ({
+		post,
+		overlap: post.data.tags.filter((tag) => tags?.includes(tag)).length,
+		readingTime: getReadingTime(post.body ?? ''),
+	}))
+	.filter((entry) => entry.overlap > 0)
+	.sort((a, b) => b.overlap - a.overlap || b.post.data.pubDate.valueOf() - a.post.data.pubDate.valueOf())
+	.slice(0, 3);
 ---
 
-<html lang="en">
-	<head>
-		<BaseHead
-			title={title}
-			description={description}
-			image={heroImage}
-			type="article"
-			pubDate={pubDate}
-			updatedDate={updatedDate}
-			tags={tags}
-		/>
-		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-		</style>
-	</head>
+<BaseLayout
+	title={title}
+	description={description}
+	image={heroImage}
+	type="article"
+	pubDate={pubDate}
+	updatedDate={updatedDate}
+	tags={tags}
+>
+	<article class="recipe">
+		<div class="container recipe__grid">
+			<div class="recipe__col">
+				<Breadcrumb
+					items={[
+						{ label: 'Home', href: '/' },
+						{ label: 'Cookbook', href: '/blog' },
+						{ label: title },
+					]}
+				/>
 
-	<body>
-		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date meta">
-							<FormattedDate date={pubDate} /> &middot; {readingTime} min read
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						{
-							tags && tags.length > 0 && (
-								<ul class="tag-list">
-									{tags.map((tag) => (
-										<li>
-											<a href={`/tags/${slugifyTag(tag)}/`}>{tag}</a>
-										</li>
-									))}
-								</ul>
-							)
-						}
-						<hr />
+				<header class="recipe__head">
+					<p class="label">
+						{topic ?? 'Recipe'} · <FormattedDate date={pubDate} />
+					</p>
+					<AccentHeading text={title} accent={accentWord} as="h1" />
+					<p class="lead">{description}</p>
+
+					<p class="recipe__meta meta">
+						<span>Cooking time {readingTime} min</span>
+						{difficulty && <Toque level={difficulty} />}
+						<span>by {AUTHOR_NAME}</span>
+					</p>
+
+					{
+						updatedDate && (
+							<p class="meta">
+								Last updated <FormattedDate date={updatedDate} />
+							</p>
+						)
+					}
+
+					{
+						tags && tags.length > 0 && (
+							<ul class="recipe__tags">
+								{tags.map((tag) => (
+									<li>
+										<CategoryChip topic={tag} />
+									</li>
+								))}
+							</ul>
+						)
+					}
+				</header>
+			</div>
+
+			{
+				heroImage && (
+					<figure class="recipe__hero recipe__col">
+						<Image src={heroImage} alt="" width={1360} height={765} loading="eager" />
+					</figure>
+				)
+			}
+
+			{
+				ingredients && ingredients.length > 0 && (
+					<div class="recipe__col">
+						<Ingredients items={ingredients} cookingTime={readingTime} difficulty={difficulty} />
 					</div>
-					<slot />
-					<Comments slug={slug} />
+				)
+			}
+
+			<div class="recipe__col prose prose--article">
+				<slot />
+			</div>
+
+			<div class="recipe__col recipe__end">
+				<Sprig width={120} />
+			</div>
+
+			<div class="recipe__col">
+				<AuthorBox />
+			</div>
+
+			<aside class="recipe__toc">
+				<TableOfContents headings={headings} />
+			</aside>
+
+			<div class="recipe__col">
+				<Comments slug={slug} />
+			</div>
+		</div>
+	</article>
+
+	{
+		related.length > 0 && (
+			<section class="section section--band">
+				<div class="container stack" style="gap: 2.5rem">
+					<SectionHeader
+						kicker="From the leftovers"
+						title="Goes well with this one"
+						accent="well"
+						linkHref="/blog"
+						linkLabel="The full cookbook"
+					/>
+					<div class="related-grid" data-reveal-group>
+						{related.map(({ post, readingTime: time }) => (
+							<ArticleCard
+								class="reveal"
+								title={post.data.title}
+								accent={post.data.accentWord}
+								description={post.data.description}
+								url={`/blog/${post.id}/`}
+								tags={post.data.tags}
+								heroImage={post.data.heroImage}
+								readingTime={time}
+								difficulty={post.data.difficulty}
+								draft={post.data.draft}
+							/>
+						))}
+					</div>
 				</div>
-			</article>
-		</main>
-		<Footer />
-	</body>
-</html>
+			</section>
+		)
+	}
+
+	{/* The recipe already spends its ornaments on the header pair and the
+	    sign-off sprig, so the closing panel goes without (§4). */}
+	<CtaPanel ornament={false} />
+</BaseLayout>
+
+<style>
+	.recipe {
+		padding-block: 2.5rem 5rem;
+	}
+
+	/* The text column keeps its 68ch no matter what; the outer tracks only
+	   exist so the TOC has somewhere to live from lg upwards. */
+	.recipe__grid {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		justify-items: center;
+		row-gap: 2rem;
+	}
+
+	.recipe__col {
+		width: 100%;
+		max-width: var(--w-text);
+		min-width: 0;
+	}
+
+	@media (min-width: 1180px) {
+		.recipe__grid {
+			grid-template-columns: 1fr min(var(--w-text), 100%) 1fr;
+			column-gap: 2.5rem;
+		}
+
+		.recipe__col {
+			grid-column: 2;
+			max-width: none;
+		}
+
+		.recipe__toc {
+			grid-column: 3;
+			grid-row: 1 / span 4;
+			align-self: start;
+			width: 100%;
+		}
+	}
+
+	.recipe__toc {
+		display: none;
+	}
+
+	@media (min-width: 1180px) {
+		.recipe__toc {
+			display: block;
+		}
+	}
+
+	.recipe__head {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		padding-top: 1.5rem;
+	}
+
+	.recipe__meta {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		flex-wrap: wrap;
+	}
+
+	.recipe__tags {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+	}
+
+	.recipe__hero {
+		margin: 0;
+	}
+
+	.recipe__hero :global(img) {
+		width: 100%;
+		height: auto;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--hairline);
+		display: block;
+	}
+
+	.recipe__end {
+		display: flex;
+		justify-content: center;
+		padding-block: 1rem;
+	}
+
+	.related-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+
+	@media (min-width: 768px) {
+		.related-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+</style>

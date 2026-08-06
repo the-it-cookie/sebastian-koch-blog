@@ -1,19 +1,150 @@
 ---
+/**
+ * DESIGN_august.md §6 — three flavours, a full 1px frame each.
+ * Explicitly no coloured bar down the left edge.
+ *
+ *   pinch — "a pinch of…", the short tip
+ *   burnt — the gotcha that costs people hours
+ *   note  — a plain aside
+ */
+
 interface Props {
-	type?: 'ingredients' | 'steps' | 'warning';
+	variant?: 'pinch' | 'burnt' | 'note';
 	title?: string;
+	class?: string;
 }
 
-const { type = 'steps', title } = Astro.props;
+const DEFAULT_TITLES = {
+	pinch: 'A pinch of advice',
+	burnt: 'Where it burns',
+	note: 'Note',
+} as const;
 
-const defaultTitles = {
-	ingredients: 'Ingredients',
-	steps: 'Steps',
-	warning: 'Watch out',
-};
+const { variant = 'note', title, class: className } = Astro.props;
 ---
 
-<div class={`callout callout-${type}`}>
-	<p class="callout-title">{title ?? defaultTitles[type]}</p>
-	<slot />
-</div>
+<aside class:list={['callout', `callout--${variant}`, className]}>
+	<span class="callout__icon" aria-hidden="true">
+		{
+			variant === 'pinch' && (
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.4"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M8.6 9.4h6.8c.6 0 1.1.5 1.1 1.1l.9 10.2c.1 1.2-.8 2.3-2.1 2.3H8.7c-1.2 0-2.2-1.1-2.1-2.3l.9-10.2c.1-.6.5-1.1 1.1-1.1Z" />
+					<path d="M9.2 9.3c-.3-2.6 1-4.1 2.8-4.1s3.1 1.5 2.8 4.1" />
+					<path d="M10.8 13.2h.02" />
+					<path d="M13.2 13.2h.02" />
+					<path d="M12 15.8h.02" />
+				</svg>
+			)
+		}
+		{
+			variant === 'burnt' && (
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.4"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M3.4 13.6h11.2c.6 0 1.1.5 1 1.1-.2 3.7-2 5.7-5.4 6.1-3.6.3-5.9-1.8-6.9-6-.1-.6.4-1.2 1.1-1.2Z" />
+					<path d="M15.6 14.8c1.9-.5 3.9-.8 5.9-1" />
+					<path d="M7.2 10.8c-1-1.2-.9-2.5.2-3.7" />
+					<path d="M11.4 10.2c-1.2-1.7-1.1-3.3.3-4.8" />
+				</svg>
+			)
+		}
+		{
+			variant === 'note' && (
+				<svg
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.4"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				>
+					<path d="M7.2 3.8h11c.6 0 1 .5 1 1.1v14.3c0 .6-.4 1.1-1 1.1h-11c-1.2 0-2.2-1-2.2-2.2V6c0-1.2 1-2.2 2.2-2.2Z" />
+					<path d="M5.2 17.4c.6-.6 1.3-.9 2.1-.9h11.6" />
+					<path d="M9.4 8.2h6.4" />
+					<path d="M9.4 11.6h4.2" />
+				</svg>
+			)
+		}
+	</span>
+
+	<div class="callout__body">
+		<p class="label callout__title">{title ?? DEFAULT_TITLES[variant]}</p>
+		<div class="callout__content small"><slot /></div>
+	</div>
+</aside>
+
+<style>
+	.callout {
+		display: flex;
+		gap: 0.875rem;
+		padding: 1.25rem;
+		border-radius: var(--radius-md);
+		border: 1px solid var(--hairline);
+		background: var(--bg-band);
+	}
+
+	.callout__icon {
+		width: 24px;
+		height: 24px;
+		flex-shrink: 0;
+	}
+
+	.callout__icon :global(svg) {
+		width: 100%;
+		height: 100%;
+		display: block;
+	}
+
+	.callout__body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+
+	.callout__content {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.callout__content :global(:last-child) {
+		margin-bottom: 0;
+	}
+
+	.callout--pinch {
+		background: var(--highlight-soft);
+		border-color: var(--highlight);
+	}
+
+	.callout--pinch .callout__icon,
+	.callout--pinch .callout__title {
+		color: var(--text);
+	}
+
+	.callout--burnt {
+		background: var(--signal-soft);
+		border-color: var(--signal);
+	}
+
+	.callout--burnt .callout__icon,
+	.callout--burnt .callout__title {
+		color: var(--signal-text);
+	}
+
+	.callout--note .callout__icon,
+	.callout--note .callout__title {
+		color: var(--text-soft);
+	}
+</style>

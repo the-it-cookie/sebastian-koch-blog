@@ -1,297 +1,683 @@
-/*
-  Palette and type per Blog_Design_Brief_SebastianCook.md — "Technical Cookbook":
-  warm off-white base, teal as the leading accent, terracotta reserved for
-  sparse warm highlights (e.g. warning callouts). IBM Plex Serif for headings,
-  IBM Plex Sans for body copy, IBM Plex Mono for code and small labels.
-*/
+/* =============================================================================
+   Sebastian Cook — design system
+   Implements DESIGN_august.md in plain CSS custom properties. Every colour,
+   radius, shadow, font and duration used anywhere on the site resolves to a
+   token defined here. Nothing downstream may hard-code a hex value.
 
+   §1 palette · §2 type · §3 space/form · §7 motion
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------------
+   1. Raw palette — the vocabulary. Never referenced directly by components;
+   components use the semantic roles in section 2 so dark mode stays a one-file
+   concern.
+   -------------------------------------------------------------------------- */
 :root {
-	--bg: #faf8f4;
+	/* Neutral base */
+	--color-paper: #fdfaf3; /* page ground, light — warm baking paper */
+	--color-paper-2: #f5efe3; /* section banding, card backs */
+	--color-ink: #241e2b; /* text light / surface dark — aubergine black */
+	--color-ink-2: #1a1520; /* page ground dark, deeper than ink */
+	--color-ink-soft: #6b6272; /* secondary text, meta, captions */
+	--color-line: #dfd5c4; /* hairlines light */
+	--color-line-dark: #3a3243; /* hairlines dark */
+
+	/* Brand */
+	--color-paprika: #e04b3a; /* primary signal */
+	--color-paprika-deep: #b93726; /* hover/pressed, and small text on paper */
+	--color-paprika-soft: #fbe4df;
+	--color-sage: #7fa98c; /* secondary — calm surfaces */
+	--color-sage-deep: #3f6b4e;
+	--color-sage-soft: #e4ede5;
+	--color-turmeric: #e8a33d; /* highlight — a point, never a surface */
+	--color-turmeric-soft: #fbedd5;
+
+	/* IT counterpoint — code and terminal only, nowhere else */
+	--color-terminal-bg: #16131c;
+	--color-terminal-fg: #e6e1ec;
+	--color-terminal-lime: #8ce0a8;
+	--color-terminal-cyan: #6fd3e0;
+	--color-terminal-dim: #6b6478;
+
+	/* Form */
+	--radius-sm: 0.375rem; /*  6px — chips, inputs, small buttons */
+	--radius-md: 0.75rem; /* 12px — cards, panels */
+	--radius-lg: 1.25rem; /* 20px — hero panels, large surfaces */
+	--radius-full: 999px; /*        avatars, dots, pill chips */
+
+	/* Content widths */
+	--w-text: 68ch;
+	--w-container: 1180px;
+	--w-wide: 1320px;
+
+	/* Motion */
+	--ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+	--dur-fast: 140ms; /* hover, colour change */
+	--dur-base: 200ms; /* card lift, toggle */
+	--dur-slow: 320ms; /* reveal, panel */
+}
+
+/* -----------------------------------------------------------------------------
+   2. Semantic roles — the only thing components are allowed to reference.
+   -------------------------------------------------------------------------- */
+:root {
+	color-scheme: light;
+
+	--bg: var(--color-paper);
+	--bg-band: var(--color-paper-2);
 	--surface: #ffffff;
-	--bg-header: #ffffff;
-	--border: #e7e2d8;
-	--black: 22, 24, 29;
-	--gray-dark: 42, 46, 55;
-	--gray: 106, 110, 119;
-	--gray-light: 241, 237, 229;
-	--accent: #0e7c7b;
-	--accent-dark: #0b5f5e;
-	--accent-warm: #c8622d;
-	--shadow-sm: 0 1px 3px rgba(var(--gray), 10%);
-	--box-shadow:
-		0 2px 6px rgba(var(--gray), 12%), 0 8px 24px rgba(var(--gray), 14%),
-		0 16px 32px rgba(var(--gray), 14%);
+	--text: var(--color-ink);
+	--text-soft: var(--color-ink-soft);
+	--hairline: var(--color-line);
+	--emphasis-border: var(--color-ink); /* the deliberate 2px "hand-drawn" edge */
+
+	--signal: var(--color-paprika);
+	/* Filled signal surfaces carry white text. #E04B3A/white is 4.0:1, short of
+	   the 4.5:1 bar §9 sets, so filled surfaces step down to paprika-deep
+	   (5.8:1). Bright paprika stays on borders, accents and large type. */
+	--signal-fill: var(--color-paprika-deep);
+	--signal-fill-hover: #9c2c1d;
+	--signal-text: var(--color-paprika-deep); /* paprika at body sizes */
+	--signal-soft: var(--color-paprika-soft);
+	--on-signal: #ffffff;
+
+	--calm: var(--color-sage-soft);
+	--calm-strong: var(--color-sage);
+	--calm-text: var(--color-sage-deep);
+
+	--highlight: var(--color-turmeric);
+	--highlight-soft: var(--color-turmeric-soft);
+
+	--shadow-card: 0 1px 2px rgb(36 30 43 / 0.04), 0 6px 16px -8px rgb(36 30 43 / 0.1);
+	--shadow-hover: 0 2px 4px rgb(36 30 43 / 0.05), 0 14px 28px -12px rgb(36 30 43 / 0.16);
 }
-@media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #0e1116;
-		--surface: #161a21;
-		--bg-header: #161a21;
-		--border: #262b36;
-		--black: 232, 234, 237;
-		--gray-dark: 214, 218, 225;
-		--gray: 148, 157, 173;
-		--gray-light: 34, 39, 50;
-		--accent: #2bb3b1;
-		--accent-dark: #56c9c7;
-		--accent-warm: #e0864a;
-	}
+
+html.dark {
+	color-scheme: dark;
+
+	--bg: var(--color-ink-2);
+	--bg-band: #221c29;
+	--surface: var(--color-ink);
+	--text: var(--color-paper);
+	--text-soft: #a79eb0;
+	--hairline: var(--color-line-dark);
+	/* A 2px ink border is invisible on an ink ground — the emphasis edge moves
+	   up the scale instead so the gesture survives. */
+	--emphasis-border: #6b6076;
+
+	--signal: #ff7a68;
+	--signal-fill: #ff7a68;
+	--signal-fill-hover: #ff9c8e;
+	--signal-text: #ff7a68;
+	--signal-soft: #3a241f;
+	--on-signal: var(--color-ink); /* white on #FF7A68 is 2.5:1 — ink is 6.4:1 */
+
+	--calm: #26302a;
+	--calm-strong: var(--color-sage-deep);
+	--calm-text: #b9d3c0;
+
+	--highlight: var(--color-turmeric);
+	--highlight-soft: #33291a;
+
+	/* §1: shadows do not work on a dark ground. Hairlines and surface contrast
+	   carry the elevation instead. */
+	--shadow-card: none;
+	--shadow-hover: none;
 }
+
+/* Fonts — self-hosted through Astro's font pipeline (astro.config.mjs), never
+   a runtime request to Google. --font-display / --font-body / --font-mono are
+   emitted by <Font> in BaseHead. */
+
+/* -----------------------------------------------------------------------------
+   3. Base
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	scroll-behavior: smooth;
+	scroll-padding-top: 7rem;
+	-webkit-text-size-adjust: 100%;
+}
+
 body {
-	font-family: var(--font-sans);
 	margin: 0;
-	padding: 0;
-	text-align: left;
 	background: var(--bg);
-	word-wrap: break-word;
-	overflow-wrap: break-word;
-	color: rgb(var(--gray-dark));
-	font-size: 20px;
+	color: var(--text);
+	font-family: var(--font-body);
+	font-size: 1.0625rem;
 	line-height: 1.7;
+	font-weight: 400;
+	overflow-wrap: break-word;
+	-webkit-font-smoothing: antialiased;
+	transition:
+		background-color var(--dur-base) var(--ease-out),
+		color var(--dur-base) var(--ease-out);
 }
-main {
-	width: 720px;
-	max-width: calc(100% - 2em);
-	margin: auto;
-	padding: 3em 1em;
+
+::selection {
+	background: var(--signal-soft);
+	color: var(--text);
 }
+
+:focus-visible {
+	outline: 2px solid var(--signal);
+	outline-offset: 2px;
+	border-radius: 2px;
+}
+
+/* -----------------------------------------------------------------------------
+   4. Type scale (§2)
+   -------------------------------------------------------------------------- */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-	margin: 0 0 0.5rem 0;
-	color: rgb(var(--black));
-	font-family: var(--font-serif);
-	font-weight: 600;
-	line-height: 1.2;
+	margin: 0;
+	font-family: var(--font-display);
+	color: var(--text);
+	text-wrap: balance;
 }
-h1 {
-	font-size: 3.052em;
+
+h1,
+.t-h1 {
+	font-size: clamp(2.25rem, 4vw, 3.25rem);
+	line-height: 1.1;
+	font-weight: 500;
+	letter-spacing: -0.02em;
+}
+
+h2,
+.t-h2 {
+	font-size: clamp(1.75rem, 3vw, 2.25rem);
+	line-height: 1.15;
+	font-weight: 500;
+	letter-spacing: -0.015em;
+}
+
+h3,
+.t-h3 {
+	font-size: 1.375rem;
+	line-height: 1.25;
+	font-weight: 600;
 	letter-spacing: -0.01em;
 }
-h2 {
-	font-size: 2.441em;
-}
-h3 {
-	font-size: 1.953em;
-}
+
 h4 {
-	font-size: 1.563em;
+	font-size: 1.125rem;
+	line-height: 1.35;
+	font-weight: 600;
 }
-h5 {
-	font-size: 1.25em;
+
+.t-display {
+	font-family: var(--font-display);
+	font-size: clamp(2.75rem, 6vw, 4.5rem);
+	line-height: 1.05;
+	font-weight: 500;
+	letter-spacing: -0.02em;
+	text-wrap: balance;
 }
+
+/* Signature move §2.1 — one italic word per headline carries the twist. */
+h1 em,
+h2 em,
+h3 em,
+.t-display em,
+.accent {
+	font-style: italic;
+	font-weight: inherit;
+}
+
+.lead {
+	font-size: 1.25rem;
+	line-height: 1.6;
+	color: var(--text-soft);
+	text-wrap: pretty;
+}
+
+.small {
+	font-size: 0.9375rem;
+	line-height: 1.6;
+}
+
+/* Signature move §2.2 — the mono kicker above a headline. Looks like a
+   terminal tag without being one. */
+.label {
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	line-height: 1.2;
+	font-weight: 500;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--text-soft);
+	margin: 0;
+}
+
+.label--signal {
+	color: var(--signal-text);
+}
+
+.meta {
+	font-family: var(--font-mono);
+	font-size: 0.8125rem;
+	line-height: 1.4;
+	letter-spacing: 0.02em;
+	color: var(--text-soft);
+	margin: 0;
+}
+
+p {
+	margin: 0;
+	text-wrap: pretty;
+}
+
+a {
+	color: var(--signal-text);
+	text-decoration-thickness: 1px;
+	text-underline-offset: 0.18em;
+	transition: color var(--dur-fast) var(--ease-out);
+}
+
+a:hover {
+	color: var(--signal-fill-hover);
+}
+
 strong,
 b {
 	font-weight: 600;
 }
-a {
-	color: var(--accent);
-}
-a:hover {
-	color: var(--accent-dark);
-}
-p {
-	margin-bottom: 1em;
-}
-.prose p {
-	margin-bottom: 2em;
-}
-textarea {
-	width: 100%;
-	font-size: 16px;
-}
-input {
-	font-size: 16px;
-}
-table {
-	width: 100%;
-}
-img {
-	max-width: 100%;
-	height: auto;
-	border-radius: 8px;
-}
-code {
-	padding: 2px 5px;
-	background-color: rgb(var(--gray-light));
-	border-radius: 2px;
-	font-family: var(--font-mono);
-}
-pre {
-	padding: 1.5em;
-	border-radius: 8px;
-	font-family: var(--font-mono);
-}
-pre > code {
-	all: unset;
-	font-family: var(--font-mono);
-}
-blockquote {
-	border-left: 4px solid var(--accent);
-	padding: 0 0 0 20px;
-	margin: 0;
-	font-size: 1.333em;
-}
+
 hr {
 	border: none;
-	border-top: 1px solid var(--border);
+	border-top: 1px solid var(--hairline);
+	margin: 0;
 }
-@media (max-width: 720px) {
-	body {
-		font-size: 18px;
+
+img,
+svg,
+video {
+	max-width: 100%;
+}
+
+img {
+	height: auto;
+}
+
+/* -----------------------------------------------------------------------------
+   5. Layout (§3) — flex/grid + gap only, never sibling margins.
+   -------------------------------------------------------------------------- */
+.container,
+.container--wide {
+	width: 100%;
+	margin-inline: auto;
+	padding-inline: 20px;
+}
+
+.container {
+	max-width: calc(var(--w-container) + 128px);
+}
+
+.container--wide {
+	max-width: calc(var(--w-wide) + 128px);
+}
+
+@media (min-width: 768px) {
+	.container,
+	.container--wide {
+		padding-inline: 40px;
 	}
-	main {
-		padding: 1em;
+}
+
+@media (min-width: 1280px) {
+	.container,
+	.container--wide {
+		padding-inline: 64px;
 	}
+}
+
+.section {
+	padding-block: 5rem;
+}
+
+@media (min-width: 768px) {
+	.section {
+		padding-block: 7rem;
+	}
+}
+
+.section--band {
+	background: var(--bg-band);
+}
+
+.section--calm {
+	background: var(--calm);
+}
+
+.section--ink {
+	background: var(--color-ink);
+	color: var(--color-paper);
+}
+
+.stack {
+	display: flex;
+	flex-direction: column;
 }
 
 .sr-only {
-	border: 0;
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
 	padding: 0;
 	margin: 0;
-	position: absolute !important;
-	height: 1px;
-	width: 1px;
 	overflow: hidden;
-	/* IE6, IE7 - a 0 height clip, off to the bottom right of the visible 1px box */
-	clip: rect(1px 1px 1px 1px);
-	/* maybe deprecated but we need to support legacy browsers */
-	clip: rect(1px, 1px, 1px, 1px);
-	/* modern browsers, clip-path works inwards from each corner */
 	clip-path: inset(50%);
-	/* added line to stop words getting smushed together (as they go onto separate lines and some screen readers do not understand line feeds as a space */
 	white-space: nowrap;
+	border: 0;
 }
 
-.meta {
-	color: rgb(var(--gray));
-	font-size: 0.9em;
-	font-family: var(--font-mono);
-}
-.tag-list {
+/* -----------------------------------------------------------------------------
+   6. Prose — the 68ch article column
+   -------------------------------------------------------------------------- */
+.prose {
+	max-width: var(--w-text);
 	display: flex;
-	flex-wrap: wrap;
-	gap: 0.4em;
-	list-style: none;
-	margin: 0.5em 0;
-	padding: 0;
-}
-.tag-list li {
-	display: inline-block;
-	padding: 0.15em 0.6em;
-	border-radius: 999px;
-	background: rgba(var(--gray-light), 100%);
-	color: rgb(var(--gray-dark));
-	font-family: var(--font-mono);
-	font-size: 0.72em;
-	white-space: nowrap;
-}
-.tag-list li a {
-	color: inherit;
-	text-decoration: none;
-}
-.tag-list li:has(a):hover {
-	background: var(--accent);
-	color: #fff;
+	flex-direction: column;
+	gap: 1.5rem;
+	font-size: 1.0625rem;
+	line-height: 1.7;
 }
 
-/* Article preview cards ("recipe cards") — used on Home, Blog index, and Tag pages.
-   The title link is stretched to cover the whole card (::after inset:0) so the
-   card is clickable everywhere, while nested links like tag chips get their own
-   stacking context (position + z-index) to stay independently clickable. */
-.card {
-	position: relative;
+.prose > h2 {
+	margin-top: 1.5rem;
+}
+
+.prose > h3 {
+	margin-top: 1rem;
+}
+
+.prose ul,
+.prose ol {
+	margin: 0;
+	padding-left: 1.4em;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.prose li::marker {
+	color: var(--signal);
+}
+
+.prose blockquote {
+	margin: 0;
+	padding-left: 1.5rem;
+	border-left: 2px solid var(--signal);
+	font-family: var(--font-display);
+	font-size: 1.25rem;
+	font-style: italic;
+	line-height: 1.5;
+	color: var(--text);
+}
+
+.prose img {
+	border-radius: var(--radius-md);
+	border: 1px solid var(--hairline);
 	display: block;
+}
+
+.prose table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9375rem;
+}
+
+.prose th,
+.prose td {
+	text-align: left;
+	padding: 0.6rem 0.8rem;
+	border-bottom: 1px solid var(--hairline);
+}
+
+.prose th {
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--text-soft);
+	font-weight: 500;
+}
+
+/* Signature move §2.3 — drop cap, exactly once per article. */
+.prose--article > p:first-of-type::first-letter {
+	float: left;
+	font-family: var(--font-display);
+	font-size: 3.2rem;
+	line-height: 0.82;
+	font-weight: 500;
+	color: var(--signal);
+	padding-right: 0.08em;
+	padding-top: 0.14em;
+}
+
+/* Inline code — deliberately *not* terminal-coloured. Terminal tokens belong
+   to CodeBlock alone (§6). */
+:not(pre) > code {
+	font-family: var(--font-mono);
+	font-size: 0.875em;
+	padding: 0.15em 0.4em;
+	border-radius: var(--radius-sm);
+	background: var(--bg-band);
+	color: var(--text);
+}
+
+html.dark :not(pre) > code {
+	background: #2c2536;
+}
+
+/* -----------------------------------------------------------------------------
+   6b. Forms — shared by the contact form and the comment form.
+   -------------------------------------------------------------------------- */
+.field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+
+.field > label {
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	font-weight: 500;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--text-soft);
+}
+
+input[type='text'],
+input[type='email'],
+input:not([type]),
+select,
+textarea {
+	width: 100%;
+	padding: 0.75rem 1rem;
+	border: 1px solid var(--hairline);
+	border-radius: var(--radius-sm);
 	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 16px;
-	padding: 1.1em 1.25em;
-	box-shadow: var(--shadow-sm);
-	transition:
-		transform 160ms ease,
-		box-shadow 160ms ease,
-		border-color 160ms ease;
+	color: var(--text);
+	font-family: var(--font-body);
+	font-size: 1rem;
+	line-height: 1.5;
+	transition: border-color var(--dur-fast) var(--ease-out);
 }
-.card:hover {
-	transform: translateY(-3px);
-	box-shadow: var(--box-shadow);
-	border-color: var(--accent);
+
+input[type='text']:focus-visible,
+input[type='email']:focus-visible,
+input:not([type]):focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+	border-color: var(--signal);
 }
-.card .title {
-	margin: 0 0 0.3em 0;
-	font-size: 1.4em;
-	line-height: 1.3;
-	color: rgb(var(--black));
+
+textarea {
+	resize: vertical;
+	min-height: 8rem;
 }
-.card .title a.card-link {
-	color: inherit;
-	text-decoration: none;
+
+::placeholder {
+	color: var(--text-soft);
+	opacity: 1;
 }
-.card .title a.card-link::after {
-	content: '';
-	position: absolute;
-	inset: 0;
+
+/* -----------------------------------------------------------------------------
+   7. Code frame (§6 CodeBlock) — built at build time by rehypeCodeFrame so the
+   terminal window is there on first paint, not after hydration.
+   -------------------------------------------------------------------------- */
+.code-frame {
+	margin: 0;
+	border-radius: var(--radius-md);
+	overflow: hidden;
+	background: var(--color-terminal-bg);
+	color: var(--color-terminal-fg);
+	border: none;
 }
-.card:hover .title a.card-link {
-	color: var(--accent);
-}
-.card .meta {
-	font-size: 0.8em;
-}
-.card .description {
-	margin: 0.5em 0 0 0;
-	color: rgb(var(--gray-dark));
-}
-.card .tag-list {
-	margin: 0.7em 0 0 0;
-}
-.card .tag-list a {
-	position: relative;
-	z-index: 1;
-}
-.card .read-more {
+
+.code-frame__bar {
 	display: flex;
 	align-items: center;
-	gap: 0.3em;
-	margin-top: 0.8em;
-	font-family: var(--font-mono);
-	font-size: 0.8em;
-	color: var(--accent);
-}
-.card .read-more .arrow {
-	display: inline-block;
-	transition: transform 160ms ease;
-}
-.card:hover .read-more .arrow {
-	transform: translateX(3px);
+	gap: 0.75rem;
+	padding: 0.625rem 1rem;
+	border-bottom: 1px solid var(--color-line-dark);
 }
 
-/* Callouts for article content — Ingredients / Steps / Warning */
-.callout {
-	margin: 1.5em 0;
-	padding: 1em 1.25em;
-	border: 1px solid var(--border);
-	border-left: 4px solid var(--accent);
-	border-radius: 8px;
-	background: var(--surface);
+.code-frame__dots {
+	display: flex;
+	gap: 0.375rem;
+	flex-shrink: 0;
 }
-.callout-title {
+
+.code-frame__dots i {
+	width: 10px;
+	height: 10px;
+	border-radius: var(--radius-full);
+	background: var(--color-line-dark);
+}
+
+.code-frame__dots i:first-child {
+	background: var(--color-terminal-lime);
+}
+
+.code-frame__name {
+	flex: 1;
+	text-align: center;
 	font-family: var(--font-mono);
-	font-size: 0.75em;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-	color: var(--accent);
-	margin-bottom: 0.5em;
+	font-size: 0.8125rem;
+	letter-spacing: 0.02em;
+	color: var(--color-terminal-dim);
 }
-.callout-warning {
-	border-left-color: var(--accent-warm);
+
+.code-frame__copy {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	border: none;
+	border-radius: var(--radius-sm);
+	background: transparent;
+	color: var(--color-terminal-dim);
+	cursor: pointer;
+	transition: color var(--dur-fast) var(--ease-out);
 }
-.callout-warning .callout-title {
-	color: var(--accent-warm);
+
+.code-frame__copy:hover {
+	color: var(--color-terminal-fg);
 }
-.callout > :last-child {
-	margin-bottom: 0;
+
+.code-frame__copy svg {
+	transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.code-frame__copy .icon-check,
+.code-frame__copy.is-copied .icon-copy {
+	display: none;
+}
+
+.code-frame__copy.is-copied .icon-check {
+	display: block;
+	color: var(--color-terminal-lime);
+}
+
+.code-frame pre {
+	margin: 0;
+	padding: 1.125rem 1rem;
+	overflow-x: auto;
+	font-family: var(--font-mono);
+	font-size: 0.875rem;
+	line-height: 1.6;
+	background: var(--color-terminal-bg) !important;
+}
+
+.code-frame code {
+	font-family: inherit;
+	font-size: inherit;
+}
+
+/* -----------------------------------------------------------------------------
+   8. Motion (§7) — 3/10. Movement explains where something came from.
+   -------------------------------------------------------------------------- */
+
+/* The reveal start state is applied only once JS confirms motion is welcome
+   (html.js-reveal), so a no-JS or reduced-motion visitor never sees an element
+   stuck at opacity 0. */
+html.js-reveal .reveal {
+	opacity: 0;
+	transform: translateY(12px);
+	transition:
+		opacity var(--dur-slow) var(--ease-out),
+		transform var(--dur-slow) var(--ease-out);
+	transition-delay: var(--reveal-delay, 0ms);
+}
+
+html.js-reveal .reveal.is-visible {
+	opacity: 1;
+	transform: none;
+}
+
+/* Hand-drawn ornaments draw themselves in once, then stay still. */
+html.js-reveal .sprig path {
+	stroke-dasharray: var(--sprig-len, 240);
+	stroke-dashoffset: var(--sprig-len, 240);
+	transition: stroke-dashoffset 600ms var(--ease-out);
+}
+
+html.js-reveal .sprig.is-visible path {
+	stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html {
+		scroll-behavior: auto;
+	}
+
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+		scroll-behavior: auto !important;
+	}
+
+	.reveal,
+	.sprig path {
+		opacity: 1 !important;
+		transform: none !important;
+		stroke-dashoffset: 0 !important;
+	}
 }

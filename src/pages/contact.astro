@@ -1,114 +1,143 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
-import Header from '../components/Header.astro';
+import Breadcrumb from '../components/Breadcrumb.astro';
+import Button from '../components/Button.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
 import { AUTHOR_NAME, TURNSTILE_SITE_KEY } from '../consts';
 
 const TOPICS = ['General question', 'Collaboration', 'Speaking / MVP', 'Feedback', 'Other'];
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead
-			title={`Contact | ${AUTHOR_NAME}`}
-			description="Get in touch: general questions, collaboration, speaking, or feedback."
-		/>
-	</head>
-	<body>
-		<Header />
-		<main class="prose">
-			<h1>Contact</h1>
-			<p>
-				Got a question, a collaboration idea, or feedback on something I wrote? Use the form
-				below — I read everything myself.
+<BaseLayout
+	title={`Contact | ${AUTHOR_NAME}`}
+	description="Get in touch: general questions, collaboration, speaking, or feedback."
+>
+	<div class="page-head">
+		<div class="container page-head__inner">
+			<Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Contact' }]} />
+			<p class="label">Pass a note to the kitchen</p>
+			<h1>Say <em>hello</em></h1>
+			<p class="lead">
+				A question, a collaboration idea, or feedback on something I wrote — it all lands in the
+				same inbox, and I read every message myself.
 			</p>
+		</div>
+	</div>
 
-			<form id="contact-form">
-				<label for="contact-name">Name</label>
-				<input id="contact-name" name="name" required maxlength="80" autocomplete="name" />
+	<section class="section">
+		<div class="container contact">
+			<form id="contact-form" class="contact__form">
+				<div class="field">
+					<label for="contact-name">Name</label>
+					<input id="contact-name" name="name" required maxlength="80" autocomplete="name" />
+				</div>
 
-				<label for="contact-email">Email</label>
-				<input
-					id="contact-email"
-					name="email"
-					type="email"
-					required
-					maxlength="200"
-					autocomplete="email"
-				/>
+				<div class="field">
+					<label for="contact-email">Email</label>
+					<input
+						id="contact-email"
+						name="email"
+						type="email"
+						required
+						maxlength="200"
+						autocomplete="email"
+					/>
+				</div>
 
-				<label for="contact-topic">Topic</label>
-				<select id="contact-topic" name="topic" required>
-					{TOPICS.map((topic) => <option value={topic}>{topic}</option>)}
-				</select>
-				<input
-					id="contact-topic-other"
-					name="topicOther"
-					placeholder="What's it about?"
-					maxlength="120"
-					hidden
-				/>
+				<div class="field">
+					<label for="contact-topic">Topic</label>
+					<select id="contact-topic" name="topic" required>
+						{TOPICS.map((topic) => <option value={topic}>{topic}</option>)}
+					</select>
+					<input
+						id="contact-topic-other"
+						name="topicOther"
+						placeholder="What's it about?"
+						maxlength="120"
+						hidden
+					/>
+				</div>
 
-				<label for="contact-message">Message</label>
-				<textarea id="contact-message" name="message" required maxlength="5000" rows="7"
-				></textarea>
+				<div class="field">
+					<label for="contact-message">Message</label>
+					<textarea id="contact-message" name="message" required maxlength="5000" rows="7"
+					></textarea>
+				</div>
 
 				<div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>
-				<button type="submit">Send message</button>
-				<p id="form-message" class="meta"></p>
+
+				<div class="contact__submit">
+					<Button variant="primary" type="submit">Send message</Button>
+					<p id="form-message" class="meta"></p>
+				</div>
 			</form>
-		</main>
-		<Footer />
-	</body>
-</html>
+
+			<aside class="contact__aside">
+				<p class="label">What happens next</p>
+				<p class="small">
+					Messages go straight to my personal inbox — no autoresponder, no CRM sequence. I usually
+					reply within a few days.
+				</p>
+				<p class="small">
+					Your name, email and message are stored only as long as it takes to answer you. The
+					captcha is Cloudflare Turnstile; the <a href="/privacy">privacy policy</a> explains what
+					it does.
+				</p>
+			</aside>
+		</div>
+	</section>
+</BaseLayout>
 
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <style>
-	main.prose {
-		width: 720px;
-		max-width: calc(100% - 2em);
-		margin: auto;
-		padding: 3em 1em;
-		color: rgb(var(--gray-dark));
+	.page-head {
+		background: var(--calm);
+		padding-block: 3rem 3.5rem;
 	}
-	form {
+
+	.page-head__inner {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5em;
-		max-width: 480px;
-		margin-top: 2em;
+		gap: 1rem;
+		max-width: 62ch;
 	}
-	label {
-		font-family: var(--font-mono);
-		font-size: 0.8em;
-		color: rgb(var(--gray));
+
+	.contact {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 3rem;
+		align-items: start;
 	}
-	input,
-	select,
-	textarea {
-		font-family: var(--font-sans);
-		font-size: 1em;
-		padding: 0.5em;
-		border: 1px solid var(--border);
-		border-radius: 6px;
-		background: var(--surface);
-		color: rgb(var(--gray-dark));
+
+	@media (min-width: 900px) {
+		.contact {
+			grid-template-columns: minmax(0, 32rem) minmax(0, 22rem);
+			gap: 4rem;
+		}
 	}
-	button[type='submit'] {
-		align-self: flex-start;
-		font-family: var(--font-mono);
-		padding: 0.5em 1.25em;
-		border-radius: 6px;
-		border: 1px solid var(--accent);
-		background: var(--accent);
-		color: #fff;
-		cursor: pointer;
+
+	.contact__form {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
 	}
-	button[type='submit']:hover {
-		background: var(--accent-dark);
-		border-color: var(--accent-dark);
+
+	.contact__submit {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+
+	.contact__aside {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		padding: 1.5rem;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
+		background: var(--bg-band);
+		color: var(--text-soft);
 	}
 </style>
 

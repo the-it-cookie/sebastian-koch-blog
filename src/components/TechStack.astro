@@ -18,7 +18,7 @@ const stack = [
 ---
 
 <section class="tech-stack">
-	<p class="tech-stack-label">// the stack i work in</p>
+	<p class="label tech-stack-label">The stack I work in</p>
 	<ul>
 		{
 			stack.map((item) => (
@@ -35,20 +35,17 @@ const stack = [
 
 <style>
 	.tech-stack {
-		margin: 2em 0;
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
 	}
 	.tech-stack-label {
-		font-family: var(--font-mono);
-		font-size: 0.8em;
-		letter-spacing: 0.1em;
-		text-transform: uppercase;
-		color: var(--accent);
-		margin: 0 0 1em 0;
+		color: var(--calm-text);
 	}
 	ul {
 		display: grid;
 		grid-template-columns: repeat(3, 1fr);
-		gap: 1.5em;
+		gap: 1.5rem;
 		list-style: none;
 		margin: 0;
 		padding: 0;
@@ -57,7 +54,7 @@ const stack = [
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 0.6em;
+		gap: 0.6rem;
 	}
 	@media (max-width: 480px) {
 		ul {
@@ -68,8 +65,8 @@ const stack = [
 		width: 72px;
 		height: 72px;
 		background: #fff;
-		border: 1px solid var(--border);
-		border-radius: 12px;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -80,11 +77,13 @@ const stack = [
 		height: 100%;
 		object-fit: contain;
 		border-radius: 0;
+		border: none;
 	}
 	li span {
 		font-family: var(--font-mono);
-		font-size: 0.75em;
+		font-size: 0.75rem;
+		line-height: 1.4;
 		text-align: center;
-		color: rgb(var(--gray-dark));
+		color: var(--text-soft);
 	}
 </style>

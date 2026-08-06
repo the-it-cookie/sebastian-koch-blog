@@ -1,0 +1,20 @@
+---
+/**
+ * A heading with one italic display word (DESIGN_august.md §2).
+ * Renders plain text when the post names no accent word.
+ */
+import { splitAccent } from '../utils/accent';
+
+interface Props {
+	text: string;
+	accent?: string;
+	as?: 'h1' | 'h2' | 'h3' | 'p' | 'span';
+	class?: string;
+	id?: string;
+}
+
+const { text, accent, as: Tag = 'h2', class: className, id } = Astro.props;
+const { before, word, after } = splitAccent(text, accent);
+---
+
+<Tag class={className} id={id}>{before}{word && <em>{word}</em>}{after}</Tag>

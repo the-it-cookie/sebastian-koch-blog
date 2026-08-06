@@ -1,0 +1,188 @@
+---
+/**
+ * DESIGN_august.md §6 — ink surface, paper text, four columns.
+ *
+ * The footer is dark in both themes, so it re-declares the semantic roles for
+ * its own subtree. Everything nested inside (wordmark, links, icons) then
+ * resolves correctly without knowing it sits on ink.
+ */
+import Icon from './Icon.astro';
+import Wordmark from './Wordmark.astro';
+import { AUTHOR_NAME, LINKEDIN_URL, SITE_TAGLINE } from '../consts';
+import { slugifyTag } from '../utils/slugify';
+import { getPublishedPosts } from '../utils/posts';
+
+const posts = await getPublishedPosts();
+
+const counts = new Map<string, number>();
+for (const post of posts) {
+	for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+}
+const topics = [...counts.entries()]
+	.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+	.slice(0, 5)
+	.map(([tag]) => tag);
+
+const year = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+	<div class="container site-footer__grid">
+		<div class="site-footer__brand">
+			<Wordmark />
+			<p class="small">{SITE_TAGLINE}.</p>
+			<div class="site-footer__social">
+				<a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
+					<span class="sr-only">Sebastian Koch on LinkedIn</span>
+					<Icon name="linkedin" size={20} />
+				</a>
+				<a href="/rss.xml">
+					<span class="sr-only">RSS feed</span>
+					<Icon name="rss" size={20} />
+				</a>
+				<a href="/contact">
+					<span class="sr-only">Contact</span>
+					<Icon name="mail" size={20} />
+				</a>
+			</div>
+		</div>
+
+		<nav class="site-footer__col" aria-labelledby="footer-topics">
+			<p class="label" id="footer-topics">Topics</p>
+			<ul>
+				{topics.map((tag) => <li><a href={`/tags/${slugifyTag(tag)}/`}>{tag}</a></li>)}
+				<li><a href="/tags">All topics</a></li>
+			</ul>
+		</nav>
+
+		<nav class="site-footer__col" aria-labelledby="footer-about">
+			<p class="label" id="footer-about">The cook</p>
+			<ul>
+				<li><a href="/about">About me</a></li>
+				<li><a href="/blog">The cookbook</a></li>
+				<li><a href="/contact">Contact</a></li>
+				<li><a href="/rss.xml">RSS feed</a></li>
+			</ul>
+		</nav>
+
+		<nav class="site-footer__col" aria-labelledby="footer-legal">
+			<p class="label" id="footer-legal">Legal</p>
+			<ul>
+				<li><a href="/imprint">Imprint</a></li>
+				<li><a href="/privacy">Privacy</a></li>
+			</ul>
+		</nav>
+	</div>
+
+	<div class="container site-footer__bottom">
+		<p class="meta">&copy; {year} {AUTHOR_NAME}. All rights reserved.</p>
+		<p class="meta">Built with Astro. Hand-drawn in-house.</p>
+	</div>
+</footer>
+
+<style>
+	.site-footer {
+		--text: var(--color-paper);
+		--text-soft: #a79eb0;
+		--signal: #ff7a68;
+		--signal-text: #ff7a68;
+		--signal-fill-hover: #ff9c8e;
+		--hairline: var(--color-line-dark);
+
+		background: var(--color-ink);
+		color: var(--color-paper);
+		padding-block: 4rem 2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 2.5rem;
+	}
+
+	.site-footer__grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2.5rem;
+	}
+
+	@media (min-width: 640px) {
+		.site-footer__grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+
+		.site-footer__brand {
+			grid-column: 1 / -1;
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.site-footer__grid {
+			grid-template-columns: 1.6fr 1fr 1fr 1fr;
+		}
+
+		.site-footer__brand {
+			grid-column: auto;
+		}
+	}
+
+	.site-footer__brand {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-width: 34ch;
+		color: var(--text-soft);
+	}
+
+	.site-footer__social {
+		display: flex;
+		gap: 0.5rem;
+	}
+
+	.site-footer__social a {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 44px;
+		height: 44px;
+		margin-left: -0.7rem;
+		margin-right: -0.7rem;
+		border-radius: var(--radius-sm);
+		color: var(--text-soft);
+	}
+
+	.site-footer__social a:hover {
+		color: var(--signal);
+	}
+
+	.site-footer__col {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+
+	.site-footer__col ul {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+
+	.site-footer__col a {
+		font-size: 0.9375rem;
+		color: var(--color-paper);
+		text-decoration: none;
+	}
+
+	.site-footer__col a:hover {
+		color: var(--signal);
+	}
+
+	.site-footer__bottom {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: 0.75rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--hairline);
+	}
+</style>

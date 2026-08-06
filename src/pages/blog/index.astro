@@ -1,88 +1,158 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
-import FormattedDate from '../../components/FormattedDate.astro';
-import Header from '../../components/Header.astro';
+/**
+ * The cookbook — every recipe, newest first.
+ *
+ * §8 asks the category head for a "Newest / Popular" sort control. There is no
+ * popularity signal on a static site, and a client-side re-sort is outside the
+ * JS budget §9 sets, so the row carries the topic filters only.
+ */
+import ArticleCard from '../../components/ArticleCard.astro';
+import Breadcrumb from '../../components/Breadcrumb.astro';
+import CategoryChip from '../../components/CategoryChip.astro';
+import CtaPanel from '../../components/CtaPanel.astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE_TITLE } from '../../consts';
 import { getReadingTime } from '../../utils/readingTime';
-import { slugifyTag } from '../../utils/slugify';
+import { getPublishedPosts } from '../../utils/posts';
 
-const allPosts = await getCollection('blog', ({ data }) => import.meta.env.DEV || !data.draft);
+const allPosts = await getPublishedPosts();
+
 const posts = allPosts
 	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
 	.map((post) => ({ ...post, readingTime: getReadingTime(post.body ?? '') }));
+
+const counts = new Map<string, number>();
+for (const post of allPosts) {
+	for (const tag of post.data.tags) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+}
+const topics = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={`Blog | ${SITE_TITLE}`} description="Articles on Power Platform, Dynamics 365, AI and GDPR-compliant consent architecture." />
-		<style>
-			main {
-				width: 720px;
-			}
-			ul.post-list {
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-				display: flex;
-				flex-direction: column;
-				gap: 1em;
-			}
-			.draft-badge {
-				display: inline-block;
-				margin-left: 0.5em;
-				padding: 0.1em 0.5em;
-				border-radius: 4px;
-				background: rgb(var(--gray-light));
-				color: rgb(var(--gray-dark));
-				font-family: var(--font-mono);
-				font-size: 0.6em;
-				text-transform: uppercase;
-				vertical-align: middle;
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<section>
-				<ul class="post-list">
-					{
-						posts.map((post) => (
+<BaseLayout
+	title={`The cookbook | ${SITE_TITLE}`}
+	description="Every recipe on the site: Power Platform, Dynamics 365, AI in Copilot, and GDPR-compliant consent architecture."
+>
+	<div class="page-head">
+		<div class="container page-head__inner">
+			<Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Cookbook' }]} />
+			<p class="label">The cookbook</p>
+			<h1>Everything that made it <em>out</em> of the test kitchen</h1>
+			<p class="lead">
+				Patterns from real Power Platform and Dynamics 365 projects — written down after they held
+				up in production, not while I was still hoping they would.
+			</p>
+			<p class="meta">{posts.length} {posts.length === 1 ? 'recipe' : 'recipes'}</p>
+		</div>
+	</div>
+
+	{
+		topics.length > 0 && (
+			<div class="filters">
+				<div class="container filters__inner">
+					<ul class="filters__list">
+						{topics.map(([tag]) => (
 							<li>
-								<div class="card">
-									<h2 class="title">
-										<a class="card-link" href={`/blog/${post.id}/`}>
-											{post.data.title}
-										</a>
-										{post.data.draft && <span class="draft-badge">Draft</span>}
-									</h2>
-									<p class="meta">
-										<FormattedDate date={post.data.pubDate} /> &middot; {post.readingTime} min
-										read
-									</p>
-									<p class="description">{post.data.description}</p>
-									{post.data.tags.length > 0 && (
-										<ul class="tag-list">
-											{post.data.tags.map((tag) => (
-												<li>
-													<a href={`/tags/${slugifyTag(tag)}/`}>{tag}</a>
-												</li>
-											))}
-										</ul>
-									)}
-									<p class="read-more">
-										Read article <span class="arrow">&rarr;</span>
-									</p>
-								</div>
+								<CategoryChip topic={tag} />
 							</li>
-						))
-					}
-				</ul>
-			</section>
-		</main>
-		<Footer />
-	</body>
-</html>
+						))}
+					</ul>
+				</div>
+			</div>
+		)
+	}
+
+	<section class="section">
+		<div class="container">
+			{
+				posts.length > 0 ? (
+					<div class="card-grid" data-reveal-group>
+						{posts.map((post) => (
+							<ArticleCard
+								class="reveal"
+								headingLevel="h2"
+								title={post.data.title}
+								accent={post.data.accentWord}
+								description={post.data.description}
+								url={`/blog/${post.id}/`}
+								tags={post.data.tags}
+								heroImage={post.data.heroImage}
+								readingTime={post.readingTime}
+								difficulty={post.data.difficulty}
+								draft={post.data.draft}
+							/>
+						))}
+					</div>
+				) : (
+					<p class="empty">Nothing is simmering here yet.</p>
+				)
+			}
+		</div>
+	</section>
+
+	<CtaPanel />
+</BaseLayout>
+
+<style>
+	.page-head {
+		background: var(--calm);
+		padding-block: 3rem 3.5rem;
+	}
+
+	.page-head__inner {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		max-width: 62ch;
+	}
+
+	.filters {
+		background: var(--bg);
+		border-bottom: 1px solid var(--hairline);
+	}
+
+	/* Sticks below the condensed header band (§8). The band's own height is
+	   fixed by its type and padding, so the offset can be a constant. */
+	@media (min-width: 768px) {
+		.filters {
+			position: sticky;
+			top: 57px;
+			z-index: 20;
+		}
+	}
+
+	.filters__inner {
+		padding-block: 0.875rem;
+	}
+
+	.filters__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		gap: 0.5rem;
+		overflow-x: auto;
+		scrollbar-width: thin;
+	}
+
+	.card-grid {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2rem;
+	}
+
+	@media (min-width: 768px) {
+		.card-grid {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+
+	@media (min-width: 1100px) {
+		.card-grid {
+			grid-template-columns: repeat(3, 1fr);
+		}
+	}
+
+	.empty {
+		color: var(--text-soft);
+	}
+</style>

@@ -41,41 +41,46 @@ import { SITE_TITLE } from '../../consts';
 
 <style>
 	.admin {
-		width: 720px;
-		max-width: calc(100% - 2em);
-		margin: auto;
-		padding: 3em 1em;
+		width: 100%;
+		max-width: 60rem;
+		margin-inline: auto;
+		padding: 3rem 20px;
+		display: flex;
+		flex-direction: column;
+		gap: 2.5rem;
 	}
 	.admin section {
-		margin-top: 2.5em;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
 	}
 	#auth-gate {
 		display: flex;
-		gap: 0.5em;
+		gap: 0.5rem;
 		align-items: center;
-		margin-bottom: 1.5em;
 	}
 	#auth-gate input {
 		flex: 1;
-		padding: 0.5em;
-		border: 1px solid var(--border);
-		border-radius: 6px;
 		font-family: var(--font-mono);
 	}
 	#auth-gate button,
 	.item-actions button {
 		font-family: var(--font-mono);
-		font-size: 0.85em;
-		padding: 0.4em 0.9em;
-		border-radius: 6px;
-		border: 1px solid var(--border);
+		font-size: 0.8125rem;
+		padding: 0.5rem 1rem;
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--hairline);
 		background: var(--surface);
-		color: rgb(var(--gray-dark));
+		color: var(--text);
 		cursor: pointer;
+		transition:
+			border-color var(--dur-fast) var(--ease-out),
+			color var(--dur-fast) var(--ease-out);
 	}
+	#auth-gate button:hover,
 	.item-actions button:hover {
-		border-color: var(--accent);
-		color: var(--accent);
+		border-color: var(--signal);
+		color: var(--signal-text);
 	}
 	.admin-list {
 		list-style: none;
@@ -83,27 +88,27 @@ import { SITE_TITLE } from '../../consts';
 		padding: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 1em;
+		gap: 1rem;
 	}
 	.admin-item {
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 1em 1.25em;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
+		padding: 1.125rem 1.25rem;
 		background: var(--surface);
 	}
 	.admin-item .item-meta {
 		font-family: var(--font-mono);
-		font-size: 0.8em;
-		color: rgb(var(--gray));
-		margin-bottom: 0.5em;
+		font-size: 0.8125rem;
+		color: var(--text-soft);
+		margin-bottom: 0.5rem;
 	}
 	.admin-item .item-body {
 		white-space: pre-wrap;
-		margin: 0 0 0.75em 0;
+		margin: 0 0 0.75rem 0;
 	}
 	.item-actions {
 		display: flex;
-		gap: 0.5em;
+		gap: 0.5rem;
 	}
 </style>
 

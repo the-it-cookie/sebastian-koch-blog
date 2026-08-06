@@ -47,6 +47,18 @@ const articleJsonLd =
 		: null;
 ---
 
+<!-- Theme, before first paint. Sits above every stylesheet so the page never
+     flashes light before switching to dark (DESIGN_august.md §1). -->
+<script is:inline>
+	(() => {
+		const stored = localStorage.getItem('sc-theme');
+		const dark = stored
+			? stored === 'dark'
+			: window.matchMedia('(prefers-color-scheme: dark)').matches;
+		document.documentElement.classList.toggle('dark', dark);
+	})();
+</script>
+
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
@@ -61,8 +73,9 @@ const articleJsonLd =
 />
 <meta name="generator" content={Astro.generator} />
 
-<Font cssVariable="--font-sans" preload />
-<Font cssVariable="--font-serif" preload />
+<Font cssVariable="--font-display" preload />
+<Font cssVariable="--font-body" preload />
+<Font cssVariable="--font-mono" />
 
 <!-- Canonical URL -->
 <link rel="canonical" href={canonicalURL} />

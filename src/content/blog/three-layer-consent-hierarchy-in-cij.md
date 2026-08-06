@@ -2,6 +2,8 @@
 title: 'The three-layer consent hierarchy in Customer Insights - Journeys'
 description: 'A short introduction to how consent is structured in CIJ: compliance profiles, purposes, and topics, and why the distinction matters.'
 pubDate: 2026-07-24
+accentWord: 'hierarchy'
+difficulty: 'medium'
 tags: ['Customer Insights - Journeys', 'Consent', 'Fundamentals']
 draft: false
 ---

@@ -2,6 +2,8 @@
 title: 'Why this site is called a cookbook'
 description: 'Why I call this a cookbook instead of a blog, and what kind of recipes you will find here.'
 pubDate: 2026-07-17
+accentWord: 'cookbook'
+difficulty: 'easy'
 tags: ['Introduction']
 draft: false
 ---

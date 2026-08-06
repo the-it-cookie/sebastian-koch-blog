@@ -1,0 +1,60 @@
+---
+/**
+ * The IT counterpoint (DESIGN_august.md §6), for use inside .astro pages.
+ * Markdown fences get the identical frame from the rehypeCodeFrame plugin —
+ * this component just reproduces it for hand-written snippets.
+ *
+ * This and the markdown fences are the only places terminal colours appear.
+ */
+import { Code } from 'astro:components';
+import terminalTheme from '../styles/shiki-terminal.js';
+
+interface Props {
+	code: string;
+	lang?: string;
+	/** Shown centred in the window bar. Defaults to the language. */
+	filename?: string;
+	class?: string;
+}
+
+const { code, lang = 'powershell', filename, class: className } = Astro.props;
+---
+
+<figure class:list={['code-frame', className]}>
+	<figcaption class="code-frame__bar">
+		<span class="code-frame__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+		<span class="code-frame__name">{filename ?? lang}</span>
+		<button type="button" class="code-frame__copy" aria-label="Copy code to clipboard">
+			<svg
+				class="icon-copy"
+				width="18"
+				height="18"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.75"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<rect x="9" y="9" width="12" height="12" rx="2"></rect>
+				<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+			</svg>
+			<svg
+				class="icon-check"
+				width="18"
+				height="18"
+				viewBox="0 0 24 24"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="1.75"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				aria-hidden="true"
+			>
+				<path d="M20 6 9 17l-5-5"></path>
+			</svg>
+		</button>
+	</figcaption>
+	<Code code={code.trim()} lang={lang as never} theme={terminalTheme as never} />
+</figure>

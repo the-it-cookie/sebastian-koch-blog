@@ -2,6 +2,8 @@
 title: 'Building an auditable double opt-in log in CIJ'
 description: 'Why CIJ''s built-in consent state is not enough for GDPR Article 7 proof, and how to build an append-only double opt-in log with a custom table, a plugin, and a flow.'
 pubDate: 2026-08-07
+accentWord: 'auditable'
+difficulty: 'advanced'
 tags: ['Customer Insights - Journeys', 'Consent', 'GDPR', 'Dataverse', 'Power Automate']
 draft: true
 ---

@@ -1,0 +1,10 @@
+<!-- Fallback for topics outside the eight named categories: a pot on the heat. -->
+<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+	<path d="M5.4 13.8c7.1-.8 14.3-.8 21.4 0"/>
+	<path d="M6.5 14.2c.4 6 2 10 4.9 12.2 3 .8 6.8.9 11.3.3 1.6-1.5 2.6-5.6 3-12.4"/>
+	<path d="M5.5 15.6c-1.5.1-2.3 1-2.3 2.2 0 1.2.9 2.1 2.5 2.3"/>
+	<path d="M26.5 15.6c1.5.1 2.3 1 2.3 2.2 0 1.2-.9 2.1-2.5 2.3"/>
+	<path d="M12.2 9.6c-1.2-1.4-1.1-2.9.2-4.3"/>
+	<path d="M17.4 8.8c-1.5-1.9-1.3-3.8.4-5.6"/>
+	<path d="M22.3 9.8c-1.1-1.2-1-2.6.2-3.9"/>
+</svg>

@@ -17,6 +17,13 @@ const blog = defineCollection({
 			draft: z.boolean().default(false),
 			canonical: z.string().url().optional(),
 			heroImage: z.optional(image()),
+			// --- cookbook fields (DESIGN_august.md §9) ---
+			/** The one word in the title set in display italic. */
+			accentWord: z.string().optional(),
+			/** Chef's hats on the card and in the ingredients box. */
+			difficulty: z.enum(['easy', 'medium', 'advanced']).optional(),
+			/** Prerequisites. Wrap versions and licences in `backticks` for mono. */
+			ingredients: z.array(z.string()).default([]),
 		}),
 });
 

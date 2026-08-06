@@ -1,0 +1,104 @@
+---
+/**
+ * The closing panel from DESIGN_august.md §6, built to the NewsletterPanel
+ * spec — full-width calm surface, sprig centred on top, h2 with an italic
+ * accent, a lead line, then the action row.
+ *
+ * The site has no newsletter backend, so rather than ship an email field that
+ * silently drops addresses (and would need its own consent handling), the row
+ * offers the two subscriptions that do exist: RSS and getting in touch.
+ */
+import Button from './Button.astro';
+import AccentHeading from './AccentHeading.astro';
+import Icon from './Icon.astro';
+import Sprig from './ornaments/Sprig.astro';
+
+interface Props {
+	title?: string;
+	accent?: string;
+	lead?: string;
+	/** Off on pages that already spend their ornament budget (§4: max three). */
+	ornament?: boolean;
+	class?: string;
+}
+
+const {
+	title = 'New recipes, whenever one is actually done',
+	accent = 'actually',
+	lead = 'No schedule, no filler. A post goes up when something has been built, tested and is worth passing on.',
+	ornament = true,
+	class: className,
+} = Astro.props;
+---
+
+<section class:list={['cta', className]}>
+	<div class="container cta__inner">
+		{ornament && <Sprig width={110} />}
+		<AccentHeading text={title} accent={accent} as="h2" class="cta__title" />
+		<p class="lead cta__lead">{lead}</p>
+
+		<div class="cta__actions">
+			<Button variant="primary" href="/contact">Get in touch</Button>
+			<a class="cta__rss" href="/rss.xml">
+				<Icon name="rss" size={18} />
+				Subscribe via RSS
+			</a>
+		</div>
+
+		<p class="meta cta__note">Written by one person. Replies come from the same one.</p>
+	</div>
+</section>
+
+<style>
+	.cta {
+		background: var(--calm);
+		padding-block: 5rem;
+	}
+
+	@media (min-width: 768px) {
+		.cta {
+			padding-block: 7rem;
+		}
+	}
+
+	.cta__inner {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1rem;
+		text-align: center;
+	}
+
+	.cta :global(.cta__title) {
+		max-width: 22ch;
+	}
+
+	.cta__lead {
+		max-width: 54ch;
+		color: var(--text);
+	}
+
+	.cta__actions {
+		display: flex;
+		align-items: center;
+		gap: 1.25rem;
+		flex-wrap: wrap;
+		justify-content: center;
+		margin-top: 0.5rem;
+	}
+
+	.cta__rss {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-height: 44px;
+		font-size: 0.9375rem;
+		font-weight: 500;
+		text-decoration: none;
+		color: var(--signal-text);
+	}
+
+	.cta__note {
+		margin-top: 0.25rem;
+	}
+</style>

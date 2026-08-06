@@ -1,0 +1,120 @@
+---
+/**
+ * DESIGN_august.md §6 — sticky from lg, mono numbers, the current entry in
+ * signal colour. Only h2s are listed; a two-level tree in a 200px rail reads
+ * as noise.
+ */
+
+interface Props {
+	headings: { depth: number; slug: string; text: string }[];
+	class?: string;
+}
+
+const { headings, class: className } = Astro.props;
+const entries = headings.filter((h) => h.depth === 2);
+---
+
+{
+	entries.length > 1 && (
+		<nav class:list={['toc', className]} aria-labelledby="toc-title">
+			<p class="label" id="toc-title">On this page</p>
+			<ol>
+				{entries.map((heading, i) => (
+					<li>
+						<a href={`#${heading.slug}`} data-toc-link>
+							<span class="toc__num" aria-hidden="true">
+								{String(i + 1).padStart(2, '0')}
+							</span>
+							<span class="toc__text">{heading.text}</span>
+						</a>
+					</li>
+				))}
+			</ol>
+		</nav>
+	)
+}
+
+<style>
+	.toc {
+		display: flex;
+		flex-direction: column;
+		gap: 0.875rem;
+		position: sticky;
+		top: 8rem;
+	}
+
+	.toc ol {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		border-left: 1px solid var(--hairline);
+	}
+
+	.toc a {
+		display: flex;
+		gap: 0.6rem;
+		padding: 0.15rem 0 0.15rem 0.875rem;
+		margin-left: -1px;
+		border-left: 2px solid transparent;
+		font-size: 0.875rem;
+		line-height: 1.4;
+		color: var(--text-soft);
+		text-decoration: none;
+		transition:
+			color var(--dur-fast) var(--ease-out),
+			border-color var(--dur-fast) var(--ease-out);
+	}
+
+	.toc a:hover {
+		color: var(--text);
+	}
+
+	.toc a.is-current {
+		color: var(--signal-text);
+		border-left-color: var(--signal);
+	}
+
+	.toc__num {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.02em;
+		padding-top: 0.15em;
+		flex-shrink: 0;
+	}
+</style>
+
+<script>
+	const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
+
+	if (links.length > 0) {
+		const byId = new Map(links.map((link) => [decodeURIComponent(link.hash.slice(1)), link]));
+		const targets = [...byId.keys()]
+			.map((id) => document.getElementById(id))
+			.filter((el): el is HTMLElement => Boolean(el));
+
+		// Track which headings are above the fold and mark the last one. Using
+		// the observer's own bookkeeping avoids a scroll handler entirely.
+		const visible = new Set<string>();
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					if (entry.isIntersecting) visible.add(entry.target.id);
+					else visible.delete(entry.target.id);
+				}
+
+				const current =
+					targets.find((el) => visible.has(el.id))?.id ??
+					targets.filter((el) => el.getBoundingClientRect().top < 120).at(-1)?.id;
+
+				for (const [id, link] of byId) link.classList.toggle('is-current', id === current);
+			},
+			{ rootMargin: '-120px 0px -70% 0px' },
+		);
+
+		targets.forEach((el) => observer.observe(el));
+	}
+</script>

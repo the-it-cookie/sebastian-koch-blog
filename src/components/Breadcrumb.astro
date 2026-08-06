@@ -1,0 +1,60 @@
+---
+/**
+ * DESIGN_august.md §6 — mono, slash separators.
+ */
+
+interface Props {
+	items: { label: string; href?: string }[];
+	class?: string;
+}
+
+const { items, class: className } = Astro.props;
+---
+
+<nav class:list={['breadcrumb', className]} aria-label="Breadcrumb">
+	<ol>
+		{
+			items.map((item, i) => (
+				<li>
+					{item.href ? <a href={item.href}>{item.label}</a> : <span aria-current="page">{item.label}</span>}
+					{i < items.length - 1 && <span class="breadcrumb__sep" aria-hidden="true">/</span>}
+				</li>
+			))
+		}
+	</ol>
+</nav>
+
+<style>
+	.breadcrumb ol {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.breadcrumb li {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		letter-spacing: 0.02em;
+		color: var(--text-soft);
+	}
+
+	.breadcrumb a {
+		color: var(--text-soft);
+		text-decoration: none;
+	}
+
+	.breadcrumb a:hover {
+		color: var(--signal-text);
+	}
+
+	.breadcrumb__sep {
+		color: var(--hairline);
+	}
+</style>

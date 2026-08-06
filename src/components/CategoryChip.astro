@@ -1,0 +1,55 @@
+---
+/**
+ * DESIGN_august.md §6. Every topic wears the same sage chip — the drawing is
+ * what distinguishes them, never the colour.
+ */
+import CategoryIcon from './CategoryIcon.astro';
+import { slugifyTag } from '../utils/slugify';
+
+interface Props {
+	topic: string;
+	/** Renders as plain text instead of a link (e.g. inside a clickable card). */
+	static?: boolean;
+	class?: string;
+}
+
+const { topic, static: isStatic = false, class: className } = Astro.props;
+const Tag = isStatic ? 'span' : 'a';
+---
+
+<Tag
+	class:list={['chip', { 'chip--link': !isStatic }, className]}
+	href={isStatic ? undefined : `/tags/${slugifyTag(topic)}/`}
+>
+	<CategoryIcon topic={topic} size={16} />
+	{topic}
+</Tag>
+
+<style>
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.25rem 0.75rem;
+		border-radius: var(--radius-full);
+		background: var(--calm);
+		color: var(--calm-text);
+		font-size: 0.9375rem;
+		font-weight: 500;
+		line-height: 1.4;
+		text-decoration: none;
+		white-space: nowrap;
+		transition:
+			background-color var(--dur-fast) var(--ease-out),
+			color var(--dur-fast) var(--ease-out);
+	}
+
+	.chip--link:hover {
+		background: var(--calm-strong);
+		color: var(--color-ink);
+	}
+
+	:global(html.dark) .chip--link:hover {
+		color: var(--color-paper);
+	}
+</style>

@@ -1,0 +1,248 @@
+---
+/**
+ * DESIGN_august.md §6 — search is an overlay dialog, never a dropdown.
+ * The index is a static JSON file fetched the first time the dialog opens.
+ */
+import Icon from './Icon.astro';
+---
+
+<dialog class="search" id="search-dialog" aria-label="Search articles">
+	<form class="search__field" role="search" data-search-form>
+		<Icon name="search" size={20} class="search__glyph" />
+		<input
+			type="search"
+			id="search-input"
+			placeholder="Search recipes…"
+			autocomplete="off"
+			aria-label="Search recipes"
+		/>
+		<button type="button" class="search__close" data-search-close aria-label="Close search">
+			<Icon name="close" size={20} />
+		</button>
+	</form>
+	<p class="search__hint meta" data-search-hint>Type to search titles, teasers and topics.</p>
+	<ul class="search__results" data-search-results></ul>
+</dialog>
+
+<style>
+	.search {
+		width: min(640px, calc(100vw - 40px));
+		margin-top: 12vh;
+		margin-inline: auto;
+		padding: 0;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
+		background: var(--surface);
+		color: var(--text);
+		box-shadow: var(--shadow-hover);
+	}
+
+	.search::backdrop {
+		background: rgb(26 21 32 / 0.5);
+	}
+
+	.search[open] {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.search__field {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.75rem 1rem;
+		border-bottom: 1px solid var(--hairline);
+	}
+
+	.search__field :global(.search__glyph) {
+		color: var(--text-soft);
+	}
+
+	.search__field input {
+		flex: 1;
+		min-width: 0;
+		border: none;
+		background: transparent;
+		color: var(--text);
+		font-family: var(--font-body);
+		font-size: 1.0625rem;
+		padding-block: 0.5rem;
+	}
+
+	.search__field input:focus {
+		outline: none;
+	}
+
+	/* The UA's own clear button sits right next to our close button and reads
+	   as a duplicate. Ours stays; the browser's goes. */
+	.search__field input::-webkit-search-cancel-button {
+		appearance: none;
+	}
+
+	.search__close {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border: none;
+		border-radius: var(--radius-sm);
+		background: transparent;
+		color: var(--text-soft);
+		cursor: pointer;
+	}
+
+	.search__close:hover {
+		color: var(--signal-text);
+	}
+
+	.search__hint {
+		padding: 0.875rem 1rem;
+	}
+
+	.search__results {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		max-height: 55vh;
+		overflow-y: auto;
+	}
+
+	.search__results:not(:empty) {
+		border-top: 1px solid var(--hairline);
+	}
+
+	.search__results :global(li + li) {
+		border-top: 1px solid var(--hairline);
+	}
+
+	.search__results :global(a) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+		padding: 0.875rem 1rem;
+		text-decoration: none;
+		color: var(--text);
+	}
+
+	.search__results :global(a:hover) {
+		background: var(--bg-band);
+	}
+
+	.search__results :global(.search__title) {
+		font-family: var(--font-display);
+		font-size: 1.0625rem;
+		font-weight: 600;
+	}
+
+	.search__results :global(a:hover .search__title) {
+		color: var(--signal-text);
+	}
+
+	.search__results :global(.search__desc) {
+		font-size: 0.9375rem;
+		color: var(--text-soft);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+</style>
+
+<script>
+	interface Entry {
+		title: string;
+		description: string;
+		tags: string[];
+		url: string;
+		date: string;
+	}
+
+	const dialog = document.getElementById('search-dialog') as HTMLDialogElement | null;
+	const input = document.getElementById('search-input') as HTMLInputElement | null;
+	const results = document.querySelector<HTMLUListElement>('[data-search-results]');
+	const hint = document.querySelector<HTMLElement>('[data-search-hint]');
+
+	let index: Entry[] | null = null;
+
+	async function loadIndex() {
+		if (index) return index;
+		const res = await fetch('/search.json');
+		index = res.ok ? await res.json() : [];
+		return index;
+	}
+
+	function render(entries: Entry[], query: string) {
+		if (!results || !hint) return;
+		results.innerHTML = '';
+
+		if (!query) {
+			hint.textContent = 'Type to search titles, teasers and topics.';
+			return;
+		}
+
+		if (entries.length === 0) {
+			hint.textContent = `Nothing on the menu for “${query}”.`;
+			return;
+		}
+
+		hint.textContent = `${entries.length} ${entries.length === 1 ? 'recipe' : 'recipes'}`;
+
+		for (const entry of entries) {
+			const li = document.createElement('li');
+			const link = document.createElement('a');
+			link.href = entry.url;
+
+			const title = document.createElement('span');
+			title.className = 'search__title';
+			title.textContent = entry.title;
+
+			const desc = document.createElement('span');
+			desc.className = 'search__desc';
+			desc.textContent = entry.description;
+
+			link.append(title, desc);
+			li.append(link);
+			results.append(li);
+		}
+	}
+
+	async function search() {
+		const query = input?.value.trim().toLowerCase() ?? '';
+		const entries = await loadIndex();
+		if (!query) return render([], '');
+
+		const terms = query.split(/\s+/);
+		const matches = entries.filter((entry) => {
+			const haystack = `${entry.title} ${entry.description} ${entry.tags.join(' ')}`.toLowerCase();
+			return terms.every((term) => haystack.includes(term));
+		});
+
+		render(matches, query);
+	}
+
+	document.querySelectorAll('[data-search-open]').forEach((btn) =>
+		btn.addEventListener('click', () => {
+			dialog?.showModal();
+			input?.focus();
+			void loadIndex();
+		}),
+	);
+
+	document.querySelector('[data-search-close]')?.addEventListener('click', () => dialog?.close());
+
+	// Clicking the backdrop closes; clicking the panel must not.
+	dialog?.addEventListener('click', (event) => {
+		if (event.target === dialog) dialog.close();
+	});
+
+	document.querySelector('[data-search-form]')?.addEventListener('submit', (e) => e.preventDefault());
+
+	input?.addEventListener('input', () => void search());
+
+	dialog?.addEventListener('close', () => {
+		if (input) input.value = '';
+		render([], '');
+	});
+</script>

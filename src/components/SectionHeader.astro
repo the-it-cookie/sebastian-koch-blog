@@ -1,0 +1,73 @@
+---
+/**
+ * DESIGN_august.md §6 — mono kicker, h2 with an italic accent word, and an
+ * optional ghost link pushed to the right.
+ */
+import AccentHeading from './AccentHeading.astro';
+import Icon from './Icon.astro';
+
+interface Props {
+	kicker?: string;
+	title: string;
+	accent?: string;
+	linkHref?: string;
+	linkLabel?: string;
+	id?: string;
+	class?: string;
+}
+
+const { kicker, title, accent, linkHref, linkLabel = 'See all', id, class: className } = Astro.props;
+---
+
+<div class:list={['section-header', className]}>
+	<div class="section-header__text">
+		{kicker && <p class="label">{kicker}</p>}
+		<AccentHeading text={title} accent={accent} as="h2" id={id} />
+	</div>
+
+	{
+		linkHref && (
+			<a class="section-header__link" href={linkHref}>
+				{linkLabel}
+				<Icon name="arrow-right" size={18} />
+			</a>
+		)
+	}
+</div>
+
+<style>
+	.section-header {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 1.5rem;
+		flex-wrap: wrap;
+	}
+
+	.section-header__text {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		max-width: 34ch;
+	}
+
+	.section-header__link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding-block: 0.6rem;
+		font-size: 0.9375rem;
+		font-weight: 500;
+		text-decoration: none;
+		color: var(--signal-text);
+		white-space: nowrap;
+	}
+
+	.section-header__link :global(svg) {
+		transition: transform var(--dur-fast) var(--ease-out);
+	}
+
+	.section-header__link:hover :global(svg) {
+		transform: translateX(3px);
+	}
+</style>

@@ -1,0 +1,93 @@
+---
+/**
+ * DESIGN_august.md §6.
+ *   primary   — filled signal surface, white text
+ *   secondary — 2px ink border, transparent
+ *   ghost     — text only
+ */
+
+interface Props {
+	variant?: 'primary' | 'secondary' | 'ghost';
+	href?: string;
+	type?: 'button' | 'submit';
+	class?: string;
+	[key: string]: unknown;
+}
+
+const { variant = 'primary', href, type = 'button', class: className, ...rest } = Astro.props;
+const Tag = href ? 'a' : 'button';
+---
+
+<Tag
+	class:list={['btn', `btn--${variant}`, className]}
+	href={href}
+	type={href ? undefined : type}
+	{...rest}
+>
+	<slot />
+</Tag>
+
+<style>
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 0.5rem;
+		min-height: 44px; /* §9 — touch target */
+		padding: 0.625rem 1.25rem;
+		border-radius: var(--radius-sm);
+		font-family: var(--font-body);
+		font-size: 0.9375rem;
+		font-weight: 500;
+		line-height: 1.2;
+		text-decoration: none;
+		cursor: pointer;
+		border: 2px solid transparent;
+		background: transparent;
+		transition:
+			background-color var(--dur-fast) var(--ease-out),
+			border-color var(--dur-fast) var(--ease-out),
+			color var(--dur-fast) var(--ease-out),
+			transform var(--dur-fast) var(--ease-out);
+	}
+
+	.btn:active {
+		transform: scale(0.99);
+	}
+
+	.btn:focus-visible {
+		outline: 2px solid var(--signal);
+		outline-offset: 2px;
+	}
+
+	.btn--primary {
+		background: var(--signal-fill);
+		border-color: var(--signal-fill);
+		color: var(--on-signal);
+	}
+
+	.btn--primary:hover {
+		background: var(--signal-fill-hover);
+		border-color: var(--signal-fill-hover);
+		color: var(--on-signal);
+	}
+
+	.btn--secondary {
+		border-color: var(--emphasis-border);
+		color: var(--text);
+	}
+
+	.btn--secondary:hover {
+		border-color: var(--signal);
+		color: var(--signal-text);
+	}
+
+	.btn--ghost {
+		padding-inline: 0.25rem;
+		color: var(--signal-text);
+	}
+
+	.btn--ghost:hover {
+		color: var(--signal-fill-hover);
+	}
+</style>

@@ -2,6 +2,8 @@
 title: 'Prefilling consent in CIJ real-time marketing forms, and the traps nobody warns you about'
 description: 'Practical patterns and pitfalls for prefilling consent and email fields in CIJ real-time marketing forms using the d365mkt-afterformload event.'
 pubDate: 2026-07-31
+accentWord: 'nobody'
+difficulty: 'medium'
 tags: ['Customer Insights - Journeys', 'Consent', 'JavaScript', 'Power Platform']
 draft: true
 ---
