@@ -1,0 +1,651 @@
+---
+title: 'What nobody tells you about the marketing form editor'
+accentWord: 'nobody'
+description: 'Field notes from embedding real-time marketing forms into a system we did not own: stale data sources, the string undefined, event timing, and why there is no undo.'
+pubDate: 2026-08-07
+difficulty: 'advanced'
+tags: ['Customer Insights - Journeys', 'Consent', 'JavaScript', 'Power Platform', 'ALM']
+ingredients:
+  [
+    'Access to the embedding page, not just the form. Half the bugs live on the host side and are invisible from the form editor.',
+    'A named contact on the team that owns the embedding page. Better to know it before something is on fire.',
+    'Browser devtools open, always. This form does most of its lying visually.',
+    'A copy of the current live form HTML, saved outside the editor. There is no version history, so this is your only way back.',
+    'Two test records: one existing customer with prior state, one completely new.',
+  ]
+draft: false
+---
+
+import Callout from '../../components/Callout.astro';
+import Figure from '../../components/Figure.astro';
+import Diagram from '../../components/diagrams/Diagram.astro';
+import FlowChain from '../../components/diagrams/FlowChain.astro';
+import FlowLanes from '../../components/diagrams/FlowLanes.astro';
+import NestBox from '../../components/diagrams/NestBox.astro';
+import FanIn from '../../components/diagrams/FanIn.astro';
+import Sequence from '../../components/diagrams/Sequence.astro';
+import Pipeline from '../../components/diagrams/Pipeline.astro';
+import editorVsHtml from '../../assets/blog/marketing-form-editor/01-editor-vs-html.png';
+import undefinedString from '../../assets/blog/marketing-form-editor/02-undefined-string.png';
+import hiddenButChecked from '../../assets/blog/marketing-form-editor/03-hidden-but-checked.png';
+
+The form editor in Dynamics 365 Customer Insights Journeys is sold to you like a boxed cake mix. Add water, stir, bake. Pull in a text field, drop a consent block, hit publish. For a simple newsletter signup, that promise holds up perfectly well.
+
+Then you embed the same form into an external system, prefill it from an API, and write the result back. At that point you are no longer following a mix. You are working from scratch in somebody else's kitchen, with unlabelled jars, a stove that heats on its own schedule, and no way to taste as you go.
+
+We spent several weeks doing exactly that. What follows is the recipe we ended up with, including the parts we scorched on the way. Every project-specific detail has been swapped for a placeholder, but every mistake below is one we actually made, and each one cost real debugging time.
+
+<Callout variant="note" title="Mise en place">
+	The ingredients above are not optional. Every single problem in this article was made worse by
+	not having one of them ready. Prep time is maybe twenty minutes. Skipping it cost us several
+	days.
+</Callout>
+
+## 1. Know your ingredients: what the form actually is
+
+The single most useful reframing: **a real-time marketing form is not a form component, it is a chunk of HTML that a loader script hydrates at runtime.**
+
+Everything you configure in the visual editor ends up as `div` elements carrying `data-*` attributes. The editor is a generator for those attributes. The loader script (`FormLoader.bundle.js`) reads them, wires up validation and submission, and renders the interactive form.
+
+That means two things:
+
+- You can read and manipulate everything from plain JavaScript, because it is just DOM.
+- You get zero guarantees. There is no API surface with a contract. The `data-*` attributes are the contract, and their exact values sometimes surprise you (more on that in section 5).
+
+<Figure
+	wide
+	src={editorVsHtml}
+	alt="Side by side comparison: on the left the visual form editor showing a rendered newsletter signup form with checkboxes, on the right the HTML editor showing the generated markup with nested tables, data attributes and inline styles."
+	caption="Two views of the same form. The left one is what the editor promises. The right one is what you will actually be debugging."
+/>
+
+A consent block, for example, looks roughly like this after generation:
+
+```html
+<div class="consentBlock"
+     data-editorblocktype="Topic"
+     data-purposeid="11111111-1111-1111-1111-111111111111"
+     data-topicid="22222222-2222-2222-2222-222222222222"
+     data-purposename="Purpose A"
+     data-topicname="Topic B"
+     data-channels="Email"
+     data-optinwhenchecked="true">
+    <div>
+        <input type="checkbox"
+               id="consentTopicCheckbox-1234567890123"
+               name="msdynmkt_topicid;channels;optinwhenchecked"
+               value="22222222-2222-2222-2222-222222222222;Email;true">
+        <label for="consentTopicCheckbox-1234567890123"><p>Topic B</p></label>
+    </div>
+</div>
+```
+
+Once you internalize that the whole form is addressable this way, most tasks become straightforward DOM work. The difficulty is never "how do I select this element", it is always "why did the oven undo what I just did".
+
+## 2. Prep separately: external CSS and JavaScript
+
+The first instinct when you need custom logic is to paste it inline into the form's HTML. That works, in the same way that chopping vegetables directly into a hot pan works. It is faster right now and it is why you end up with fifteen copies of the same script quietly drifting apart across business units. Prep it separately.
+
+### External CSS
+
+The form editor lets you edit the raw HTML, including the `<head>` section. A stylesheet reference works exactly as you would expect:
+
+```html
+<head>
+    <link rel="stylesheet" href="https://cdn.example.com/forms/form-theme.v2.css">
+</head>
+```
+
+Two caveats we hit:
+
+**Specificity.** The generated inline styles are aggressive, and they were added before you got here. Editor-generated blocks carry inline `style` attributes, and inline styles beat your external stylesheet no matter how specific your selector is. You can drown that out with `!important`, which works about as well as fixing an oversalted sauce by adding more of everything else. The cleaner move is to remove the inline style from the HTML and season from one place only.
+
+**Custom fonts.** `@font-face` works, but the font file has to be reachable from the embedding page's origin policy. If your form lives inside a third-party system, serve fonts from a CDN with permissive CORS headers, not from a location that only allows your own domain.
+
+A practical pattern that kept us sane: keep one external stylesheet per brand or business unit, and reference it with a version in the filename (`form-theme.v2.css`). When you need to roll back a styling change, you change one character in the form HTML instead of reconstructing CSS from memory.
+
+### External JavaScript
+
+Same approach, with a much bigger payoff:
+
+```html
+<script src="https://cxppusa1formui01cdnsa01-endpoint.azureedge.net/global/FormLoader/FormLoader.bundle.js"></script>
+<script src="https://cdn.example.com/forms/form-logic.v3.js"></script>
+```
+
+Order matters. The form loader must be present, and your own script should register its event listeners before the form finishes loading. Since your logic runs inside an event listener rather than immediately, load order between the two script tags is less critical than it looks, but keeping the loader first matches the documented setup and avoids surprises.
+
+Configuration should not live in the external file. If your script needs to know which purpose ID represents a specific business rule, pass it in from the form instead of hardcoding it, so the same file can serve every form:
+
+```html
+<div id="form-config"
+     data-special-purpose-id="33333333-3333-3333-3333-333333333333"
+     data-consent-mirror-field="longtext1234-1234567890123">
+</div>
+```
+
+```js
+const cfg = document.getElementById("form-config");
+const specialPurposeId = cfg?.dataset.specialPurposeId;
+```
+
+This one change is the difference between "we have four forms per business unit and every fix has to be applied twelve times" and "we have one script and twelve thin forms". It is also the only realistic way to get these changes under version control, which is a topic I will come back to at the end.
+
+<Diagram
+	label="Twelve forms across three business units, each referencing one shared script and one shared stylesheet"
+	caption="Before this change, each of those twelve forms carried its own copy of the logic. Every fix had to be applied twelve times, and inevitably was not."
+>
+	<FanIn
+		groups={[
+			{ label: 'Unit A', items: ['Form 1', 'Form 2', 'Form 3', 'Form 4'] },
+			{ label: 'Unit B', items: ['Form 1', 'Form 2', 'Form 3', 'Form 4'] },
+			{ label: 'Unit C', items: ['Form 1', 'Form 2', 'Form 3', 'Form 4'] },
+		]}
+		targets={['form-logic.v3.js', 'form-theme.v2.css']}
+	/>
+</Diagram>
+
+## 3. Timing the heat: the event listeners
+
+Your custom logic hangs off events that the form loader dispatches on the document. The two we used in production:
+
+**`d365mkt-beforeformload`** fires before the form is rendered. Useful when you want to influence the form before the user sees anything, for example injecting configuration or manipulating the markup pre-hydration. Anything touching rendered inputs is pointless here, because they do not exist yet.
+
+**`d365mkt-afterformload`** fires once the form has been rendered and is interactive. This is where prefilling belongs. Critically, it also fires again when the form is rebuilt, which matters enormously in flows where the embedding system recreates the form after the user enters data.
+
+```js
+document.addEventListener("d365mkt-afterformload", (event) => {
+    // event.target is the form element
+    // event.target.parentNode is the container the host system provides
+});
+```
+
+There are additional events around submission and validation. We did not need them, and I would rather point you at the current official documentation than list names from memory, because the platform has been renaming things across releases. Verify against the docs before you build on them.
+
+<Diagram
+	label="Page lifecycle from the initial request through to the second afterformload event"
+	caption="The two marked steps are the same event. Anything you do inside it has to survive happening twice."
+>
+	<FlowChain
+		steps={[
+			{ text: 'page request' },
+			{ text: 'server renders the container', note: 'data-host attributes written' },
+			{ text: 'd365mkt-beforeformload' },
+			{ text: 'form rendered' },
+			{ text: 'd365mkt-afterformload', pivot: true },
+			{ text: 'user types their email' },
+			{ text: 'createForm called again', note: 'mailid passed in' },
+			{ text: 'form rebuilt' },
+			{ text: 'd365mkt-afterformload', pivot: true },
+		]}
+	/>
+</Diagram>
+
+Two hard-won observations about `afterformload`:
+
+**It fires more than once.** Any logic in there must be idempotent, or in kitchen terms: it has to survive being tasted twice without doubling the salt. Setting a checkbox that is already set should be a no-op, not a toggle. Our code always checks state before writing:
+
+```js
+if (cb && !cb.checked) {
+    cb.checked = true;
+    // dispatch events, see section 6
+}
+```
+
+**`event.target` is not the whole picture.** The element you receive is the form element itself. The host system frequently attaches its own data one level up, on the container. Knowing which node holds which value is not cosmetic, it caused our single longest outage. See section 4.
+
+## 4. Check the fridge, not yesterday's prep list: two sources, only one stays fresh
+
+This is the bug that cost us the most, and explaining it properly means explaining the kitchen layout first. Bear with me, because the failure mode is impossible to understand without it, and it generalizes to any form you embed in a system you do not own.
+
+### How the form gets onto the page
+
+The host system embeds the form through a JavaScript call, roughly `createForm()`, passing in a form ID and a set of parameters. Those parameters end up as attributes on the form element the loader creates. Around that form element sits a container `div` that belongs to the host system, not to the form. The host renders that container server-side and writes what it knows about the visitor into `data-*` attributes on it.
+
+The resulting DOM has two levels, and this is the whole story in one snippet:
+
+```html
+<!-- Level 1: the host's container. Attributes written by the SERVER at page render. -->
+<div id="host-form-container"
+     data-host-email="customer@example.com"
+     data-host-consents="[...]">
+
+    <!-- Level 2: the form element. Attributes written by createForm() on EVERY build. -->
+    <div mailid="customer@example.com" data-unboundform="true">
+        ... the rendered form ...
+    </div>
+
+</div>
+```
+
+Look closely and you will notice the customer email appears twice. Once on the container, once on the form element. Same value, two completely different mechanisms for keeping it up to date:
+
+- The **container attributes** are a server-rendered snapshot. Written once, when the page is delivered, and never touched again. This is the prep list somebody taped to the wall this morning.
+- The **form element attributes** come from the parameters passed into `createForm()`. They are written fresh every single time the form is built. This is actually opening the fridge and looking.
+
+<Diagram
+	label="The same email address on two nested elements, each maintained by a different mechanism"
+	caption="The same value in two places. Only one of the two is maintained after the page has been delivered."
+>
+	<NestBox
+		outer={{
+			title: 'host-form-container, owned by the host system',
+			attr: 'data-host-email = customer@example.com',
+			note: 'Written by the server, once. Never updated again.',
+			stale: true,
+		}}
+		inner={{
+			title: 'the form element',
+			attr: 'mailid = customer@example.com',
+			note: 'Written by createForm, on every single build.',
+		}}
+	/>
+</Diagram>
+
+As long as nothing changes during service, both agree and it makes no difference which one you read. Our first version read the container, because both values we needed happened to sit there together, which made it the convenient choice:
+
+```js
+// Do not do this
+const email    = event.target.parentNode.getAttribute("data-host-email");
+const consents = event.target.parentNode.getAttribute("data-host-consents");
+```
+
+### Two flows, one of which rebuilds the form
+
+The host system embedded the same form in two places.
+
+**Flow A, an existing customer.** The visitor is already identified when the page is requested. The server therefore knows the email address at render time, writes it into the container attribute, and passes it into `createForm()`. Both copies are populated. Our script reads the container, finds the address, prefills the hidden email field, and everything works. This flow never broke, not once, for months.
+
+**Flow B, a new registration.** The visitor is not a customer yet. There is nothing to write, so the server leaves the container attribute empty. The form renders with an empty email field. Then the visitor types their address, the host system rebuilds the form with it, our script runs again, reads the container attribute it has always read, and finds it still empty. It was written by the server, before the visitor existed, and no client-side rebuild touches a server-rendered attribute.
+
+<Diagram
+	label="Flow A succeeds at every step; flow B fails at the point where the script reads the stale container attribute"
+	caption="Flow A never breaks, which is why the wrong data source looked correct for months. Flow B fails at the single marked step, and every symptom after it is a consequence."
+>
+	<FlowLanes
+		lanes={[
+			{
+				label: 'Flow A · existing customer',
+				tone: 'ok',
+				outcome: 'Never broke, not once, for months.',
+				steps: [
+					{ text: 'server renders', note: 'container filled' },
+					{ text: 'createForm', note: 'mailid filled' },
+					{ text: 'afterformload' },
+					{ text: 'script reads the container', note: 'the value is there' },
+					{ text: 'prefill works' },
+				],
+			},
+			{
+				label: 'Flow B · new registration',
+				tone: 'fail',
+				outcome: 'Fails at one step. Everything after it is a consequence.',
+				steps: [
+					{ text: 'server renders', note: 'container empty, there is no customer yet' },
+					{ text: 'form rendered', note: 'no email yet' },
+					{ text: 'visitor types their email' },
+					{ text: 'createForm again', note: 'mailid filled, correct and current' },
+					{ text: 'afterformload fires again' },
+					{ text: 'script reads the container — still empty', pivot: true },
+					{ text: 'the hidden, required email field stays empty' },
+					{ text: 'validation fails on an element nobody can see' },
+					{ text: 'the form never submits' },
+				],
+			},
+		]}
+	/>
+</Diagram>
+
+That marked step is the entire bug. Everything else is consequence: the hidden `emailaddress1` field stays empty, native HTML validation refuses to submit, and the browser complains that it cannot focus an invalid control — because the invalid control is hidden. The console error says nothing about email addresses or containers.
+
+### Why it took us so long to see it
+
+Three things conspired here, and I think they are the transferable part of the story.
+
+**It worked in one flow.** Flow A was fine, so "reading from the container" was proven correct by daily use. Nobody suspected the read itself, we suspected the flow-specific parts around it.
+
+**The failure was silent and misdirected.** No exception was thrown. The visible symptom was a form that would not submit, and the browser's error message pointed at validation of a hidden field. Nothing in that message says "your data source is stale". We chased the validation and the hidden field for a while before questioning where the value came from.
+
+**The timeline of symptoms looked like two separate bugs.** For a while the form submitted but with an empty email, and later it stopped submitting at all. Two different symptoms invite the assumption of two different causes, when in fact one empty value produced both, depending on what downstream validation happened to be active.
+
+### The fix, and the actual lesson
+
+Read the value that is rebuilt with the form, not the one frozen at page render:
+
+```js
+// The value the host guarantees to pass on every build
+const email = event.target.getAttribute("mailid");
+```
+
+But the fix is not the point. The point is the distinction we did not make at the start of the project:
+
+**Some values a host system exposes are a contract. Others are internals that happen to be readable.**
+
+The parameters passed into `createForm()` are a contract. The host commits to setting them, on every build, and will tell you if that changes. The `data-host-*` attributes on the container were internal implementation details. They were never promised to us, they can be renamed or removed in any release, and in Flow B they were stale by construction, not by accident.
+
+We read the internals because they were convenient and because in the flow we tested first, they were correct. That is a trap with a very specific shape: **the wrong source produces right answers until the one situation where it does not, and that situation is usually the one you tested last.**
+
+<Callout variant="pinch" title="One email, several days">
+	If you integrate with a team that owns the embedding page, settle this before writing any code:
+	*which values do you guarantee, on which element, and at which point in the lifecycle?* We only
+	asked weeks into the project, after the outage. Asking in the first week would have cost one
+	email.
+</Callout>
+
+The analogy that finally made this click for a colleague: the container attributes are the prep list taped to the wall at the start of shift. Accurate, useful, and completely silent about the fact that somebody used the last of the cream twenty minutes ago. The form parameters are opening the fridge. Slightly more effort, correct every time.
+
+## 5. The jar labelled "salt" that contains sugar: the string "undefined"
+
+This one is almost funny in hindsight, and it silently broke a subset of our consent checkboxes.
+
+Consent blocks come in two flavors. A **purpose** block represents consent at the purpose level. A **topic** block represents consent for a specific topic underneath a purpose. Our matching logic therefore needed to branch: for topic blocks compare topic IDs, for purpose blocks compare purpose IDs.
+
+The obvious implementation:
+
+```js
+// Broken
+if (block.getAttribute('data-topicid') != undefined) {
+    match = block.getAttribute('data-topicid') == entry.T;   // topic branch
+} else {
+    match = block.getAttribute('data-purposeid') == entry.P; // purpose branch
+}
+```
+
+The editor generates purpose blocks with `data-topicid="undefined"`. Not a missing attribute. Not an empty string. The literal nine-character string `"undefined"`, sitting in the jar with a perfectly confident label on it.
+
+<Figure
+	wide
+	src={undefinedString}
+	alt="Browser devtools element inspector showing a consentBlock div, with the attributes data-topicid and data-topicname both set to the literal string undefined, highlighted in red."
+	caption="Not a missing attribute. Not null. The word, as a string, in quotes. The greyed blocks are redacted IDs."
+/>
+
+So `getAttribute('data-topicid')` returns the truthy string `"undefined"`, the comparison against JavaScript's `undefined` is false, and every purpose block cheerfully takes the topic branch, compares `"undefined"` against a real topic ID, and never matches anything. Purpose-level consents were never prefilled, while topic-level consents worked fine, which made the bug look like a data problem rather than a logic problem.
+
+The fix is to treat the string as a sentinel, and to classify both sides of the comparison:
+
+```js
+const topicId   = block.getAttribute('data-topicid');
+const purposeId = block.getAttribute('data-purposeid');
+const blockIsTopic = topicId && topicId !== 'undefined';
+
+const entryHasTopic = entry.T && entry.T !== '';
+
+let match = false;
+if (blockIsTopic && entryHasTopic) {
+    match = topicId === entry.T;
+} else if (!blockIsTopic && !entryHasTopic) {
+    match = purposeId === entry.P;
+}
+```
+
+Note the deliberate absence of a cross-comparison. A topic block must never match a purpose-level entry, and vice versa. Getting sloppy here produces consent records that claim more than the customer agreed to, which in a consent management context is not a cosmetic bug.
+
+<Callout variant="pinch" title="Never trust the type">
+	`getAttribute` returns strings or `null`, and generators happily stringify `undefined`, `null`
+	and `NaN` into an attribute. Taste before you serve, and check the label against the contents.
+</Callout>
+
+## 6. Plating is not cooking: setting `.checked` is not enough
+
+Setting a property updates the DOM. It does not tell the framework listening to that DOM that anything happened. You have arranged the plate beautifully and told nobody in the kitchen.
+
+```js
+// Visually correct, functionally invisible to the platform
+cb.checked = true;
+```
+
+The form loader tracks state through events. If you mutate an input programmatically without dispatching events, the visible checkbox and the state that gets submitted disagree with each other. The user sees a checked box, the payload says otherwise.
+
+Always dispatch, and let the events bubble:
+
+```js
+cb.checked = true;
+cb.dispatchEvent(new Event('input',  { bubbles: true }));
+cb.dispatchEvent(new Event('change', { bubbles: true }));
+```
+
+The same applies to text inputs, textareas, and any hidden mirror field you populate. We treat "assign value, then dispatch `input` and `change`" as one indivisible step and wrap it in a helper, the same way you would premix a spice blend rather than trusting yourself to add all four things under pressure:
+
+```js
+function setValue(el, value) {
+    el.value = value;
+    el.dispatchEvent(new Event('input',  { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+}
+```
+
+## 7. Let the dough rest: the purpose-then-topic timing trap
+
+This was the subtlest problem we hit, and the one I would never have guessed from reading code. It is also the most recipe-like lesson in the whole article: the ingredients were right, the technique was right, and it failed because we did not wait.
+
+After fixing the `"undefined"` sentinel, our matching logic was provably correct. We verified byte-for-byte that a topic block's `data-topicid` matched an incoming consent entry exactly. And still, two topic checkboxes refused to end up checked, while a third one on the page worked perfectly.
+
+The difference between the working and the failing checkboxes turned out to be their **parent purpose**. The working topic sat under a purpose that was already checked in the generated markup. The failing topics sat under a purpose that our own script checked at runtime, moments earlier, in the same synchronous loop.
+
+The platform apparently does not process a purpose's "accepted" state synchronously with the `change` event you dispatch. If you check the purpose and its topics in one pass, the topic writes land while the platform still considers the purpose unaccepted, and they are discarded or reverted on the next internal render. You added the eggs before the butter and sugar had come together, and the mixture split.
+
+<Diagram
+	label="One synchronous pass, in which the topic write is reverted by the platform"
+	caption="One pass. The topic write arrives before the platform has accepted the purpose, and does not survive the re-render."
+>
+	<Sequence
+		rows={[
+			{ from: 'script', to: 'DOM', text: 'purpose checked = true' },
+			{ from: 'script', to: 'platform', text: 'dispatch input and change' },
+			{ from: 'script', to: 'DOM', text: 'topic checked = true' },
+			{ from: 'script', to: 'platform', text: 'dispatch input and change' },
+			{ from: 'platform', text: 'processes the purpose acceptance' },
+			{ from: 'platform', to: 'DOM', text: 'internal re-render' },
+			{
+				kind: 'note',
+				pivot: true,
+				text: 'Topic reverted. The purpose was not accepted yet when the topic write arrived.',
+			},
+		]}
+	/>
+</Diagram>
+
+<Diagram
+	label="Two stages with a wait in between, in which the topic write survives"
+	caption="Same writes, same order, same values. The only added ingredient is the wait."
+>
+	<Sequence
+		rows={[
+			{ from: 'script', to: 'DOM', text: 'purpose checked = true' },
+			{ from: 'script', to: 'platform', text: 'dispatch input and change' },
+			{ from: 'platform', text: 'processes the purpose acceptance' },
+			{ kind: 'rest', text: 'setTimeout, 150 ms — let the dough rest' },
+			{ from: 'script', to: 'DOM', text: 'topic checked = true' },
+			{ from: 'script', to: 'platform', text: 'dispatch input and change' },
+			{ from: 'platform', to: 'DOM', text: 'internal re-render' },
+			{ kind: 'note', text: 'Topic stays checked.' },
+		]}
+	/>
+</Diagram>
+
+In code:
+
+```js
+function setCheckbox(block) {
+    const cb = block.querySelector("input");
+    if (cb && !cb.checked) {
+        cb.checked = true;
+        cb.dispatchEvent(new Event('input',  { bubbles: true }));
+        cb.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+// Phase 1: purpose-level blocks only
+document.querySelectorAll("div.consentBlock").forEach((block) => {
+    const topicId = block.getAttribute('data-topicid');
+    const purposeId = block.getAttribute('data-purposeid');
+    if (topicId && topicId !== 'undefined') return;   // skip topics for now
+
+    decodedConsents.forEach(({ P, T }) => {
+        const entryHasTopic = T && T !== '';
+        if (!entryHasTopic && purposeId === P) setCheckbox(block);
+    });
+});
+
+// Phase 2: topics, after the platform has digested the purpose state
+setTimeout(() => {
+    document.querySelectorAll("div.consentBlock").forEach((block) => {
+        const topicId = block.getAttribute('data-topicid');
+        if (!topicId || topicId === 'undefined') return;   // purposes done already
+
+        decodedConsents.forEach(({ P, T }) => {
+            const entryHasTopic = T && T !== '';
+            if (entryHasTopic && topicId === T) setCheckbox(block);
+        });
+    });
+}, 150);
+```
+
+That fixed it immediately.
+
+<Callout variant="burnt" title="150 ms is a guess, and it should be labelled as one">
+	That number is "until it looks about right", not a measured resting time, and not a documented
+	guarantee. On a slow device or a congested connection it may not be enough. If the platform ever
+	exposes a proper readiness signal for consent state, that is what belongs here instead. Until
+	then it is a workaround, it should be commented as such in your code, and it should be the first
+	thing you suspect if prefilling ever gets flaky.
+</Callout>
+
+The broader diagnostic lesson is the useful part. When your matching logic is provably correct but the UI disagrees, stop re-reading the comparison and start asking *when* things happen. Two logs settle it:
+
+```js
+setCheckbox(block);
+console.log("immediately after set:", cb.id, cb.checked);
+setTimeout(() => console.log("500ms later:", cb.id, cb.checked), 500);
+```
+
+You are looking for exactly this shape:
+
+```text
+immediately after set: consentTopicCheckbox-1234567890123 true
+500ms later:           consentTopicCheckbox-1234567890123 false
+```
+
+If the first log says `true` and the second says `false`, you are not looking at a logic bug, you are looking at something downstream reverting your write. That single distinction saved us hours once we started making it.
+
+## 8. Do not build the recipe around one specific pan: brittle selectors
+
+The editor generates element IDs with timestamps appended:
+
+```html
+<input id="emailaddress1-1234567890123" name="emailaddress1" type="email">
+<textarea id="longtext1234-1234567890123" name="longtext1234"></textarea>
+```
+
+Two consequences.
+
+**Never hardcode a generated ID if you can target something stable.** We found this in our own code, shipped and silently broken:
+
+```js
+// There is no element with id "email" in this form
+document.getElementById("email").addEventListener("input", handler);
+```
+
+That throws a `TypeError` the moment the line executes. Because it sat at the end of the listener, the prefill logic above it still ran, so the form looked fine. The only casualty was the feature that line was supposed to enable, which quietly never worked at all. Nobody noticed for a while, because nothing visibly broke.
+
+Prefer attribute-prefix selectors over generated IDs:
+
+```js
+document.querySelector("input[id^='emailaddress1']")
+```
+
+**Guard everything.** In an environment where the markup is regenerated by a visual editor that colleagues also use, any element you reference can disappear between deployments without anybody thinking they made a breaking change.
+
+```js
+const el = document.querySelector("input[id^='emailaddress1']");
+if (!el) return;
+```
+
+<Callout variant="burnt" title="The smoke alarm you turned off">
+	Wrapping your logic in `try { } catch (e) { console.error(e); }` prevents one bad element from
+	killing the whole listener. It also silences the alarm while the pan is still smoking. Log
+	loudly, and put the failures somewhere you actually look.
+</Callout>
+
+## 9. Taste it, do not trust the look: hidden is not unchecked
+
+Forms often contain blocks that are hidden from the user but functionally required: a purpose that must be granted implicitly, a mirror field carrying raw state for downstream processing.
+
+Two things bit us here.
+
+**Hidden elements still participate in validation.** A hidden required field that is empty will fail native HTML validation, and the browser will complain about being unable to focus an invisible control. If a field is required and hidden, something in your code must guarantee it is populated on every path, including the paths you did not think about.
+
+**Checking a hidden box produces no visual feedback.** We spent real time convinced a hidden purpose was not being prefilled, when it was set correctly the whole time and simply invisible. That is judging the dish by how it looks under the pass light.
+
+<Figure
+	wide
+	src={hiddenButChecked}
+	alt="A rendered form showing four unchecked consent checkboxes, and below it the devtools element inspector for the same area, showing a consentBlock carrying data-hidden set to hidden whose input element is in fact checked."
+	caption="Nothing visible is ticked. The element inspector disagrees, and the element inspector is the one that gets submitted."
+/>
+
+Verify state in the console, not by looking at the page:
+
+```js
+document.querySelector("div.consentBlock[data-purposeid='33333333-3333-3333-3333-333333333333']")
+        ?.querySelector('input').checked
+```
+
+Related: if you conditionally hide a container based on a checkbox, be careful about *when* you evaluate the condition relative to your own prefill logic. If your visibility check runs before the phase that sets the relevant checkbox, you will hide a section that should have stayed visible. Ordering between "set state" and "react to state" needs to be deliberate, not accidental.
+
+## 10. Nobody is keeping a kitchen log: the real problem
+
+Every pitfall above is a technical detail you can learn once and stop repeating. This last one is structural, and it is the one I would fix first if I started over.
+
+**There is no version history for form HTML.** The editor writes directly to the record. No diff, no commit, no blame, no rollback. You are cooking without writing anything down, and when the dish comes out wrong you cannot reconstruct what you changed.
+
+Worse, the editor is right there, the change is always small, and nothing stops you from making it in production. There is no boundary. We felt that pull constantly, and we did not always resist it.
+
+With four forms per business unit and custom logic in each, that becomes untenable fast. What we would recommend, roughly in order of impact:
+
+**Move the logic out of the form.** One external, versioned JavaScript file, referenced by every form, configured through `data-*` attributes as shown in section 2. This is the highest-leverage change available. Suddenly your logic lives in Git, gets reviewed, diffs cleanly, and rolls back by deploying a previous version. The form HTML becomes thin enough that editing it is genuinely low-risk.
+
+**Turn on auditing for the form table.** It is not real version control, but it answers "who changed what, when" and gives you the previous HTML to restore in an emergency. Watch the storage cost, HTML columns are large.
+
+**Export the live forms into a repository automatically.** A scheduled job that pulls every form's HTML through the API, writes one file per form, and commits. The point is not just backup. If a commit appears that nobody made through your normal process, someone edited production directly. That is drift detection, and it is the closest thing to a safety boundary you can build without changing anybody's permissions.
+
+**Restrict write access in production.** The most reliable way to stop production edits is to make them impossible for most people, not to ask everyone nicely.
+
+**Keep a manifest.** One file, machine-readable, listing every form: ID, business unit, environment, and when it was last exported. When someone asks "what is live right now", that should be a file you open, not an investigation you launch.
+
+<Diagram
+	label="The intended route from development to production, with the two dotted paths that make an unauthorised production edit visible"
+	caption="The solid path is the intended route. The dotted paths exist so that the route nobody is supposed to take does not go unnoticed."
+>
+	<Pipeline
+		steps={[
+			{ text: 'dev environment', note: 'unmanaged solution' },
+			{ text: 'Git repository', note: 'source of truth' },
+			{ text: 'pipeline' },
+			{ text: 'production', note: 'managed, not editable' },
+		]}
+		returns={[
+			{
+				label: 'nightly export via API',
+				text: 'Every form is pulled back out of production and committed, one file per form.',
+			},
+			{
+				label: 'a commit nobody authored',
+				text: 'If that export produces a diff, somebody edited production directly. That is your drift detection.',
+			},
+		]}
+	/>
+</Diagram>
+
+## The recipe card
+
+Everything above, condensed to what fits on an index card and survives a busy service:
+
+1. **Know your ingredients.** The form is DOM plus `data-*` attributes, and never trust the type of what you read out of one. `data-topicid="undefined"` is a string, and it is lying to you.
+2. **Check the fridge, not the prep list.** Agree explicitly with the host system on which values are a contract and which are internals. The wrong source is correct right up until the one flow where it is not.
+3. **Tell the kitchen.** Setting a property is not the same as notifying the platform. Always dispatch `input` and `change` with `bubbles: true`.
+4. **Let it rest.** Purposes first, then topics, in separate stages. When correct logic produces a wrong result, stop re-reading the comparison and start asking about timing.
+5. **Write down what you cooked.** Externalize the logic into a versioned file today. The editor gives you no history, no rollback, and no boundary, and the pull to fix things directly in production is far stronger than you think it will be.
+
+None of this is in the drag-and-drop tour. All of it is waiting in the kitchen the first time you cook for actual guests.

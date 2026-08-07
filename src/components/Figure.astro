@@ -1,0 +1,63 @@
+---
+/**
+ * An image with a caption, as §4 wants them: rounded, hairline border, caption
+ * in meta. Screenshots of Power Platform surfaces are explicitly welcome, and
+ * they are treated as images — never as a surface to put text on.
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+	src: ImageMetadata;
+	/** Describe what the screenshot shows, not that it is a screenshot. */
+	alt: string;
+	caption?: string;
+	/** Rendered width in px; the image is downscaled to fit its column anyway. */
+	width?: number;
+	/**
+	 * Break out of the 68ch text column. Screenshots of dense UI — devtools
+	 * panes, side-by-side editors — become unreadable at reading-column width.
+	 */
+	wide?: boolean;
+	class?: string;
+}
+
+const { src, alt, caption, width = 1360, wide = false, class: className } = Astro.props;
+---
+
+<figure class:list={['figure', { 'figure--wide': wide }, className]}>
+	<Image src={src} alt={alt} width={width} densities={[1, 2]} loading="lazy" />
+	{caption && <figcaption class="meta figure__caption">{caption}</figcaption>}
+</figure>
+
+<style>
+	.figure {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.figure :global(img) {
+		display: block;
+		width: 100%;
+		height: auto;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
+		background: var(--surface);
+	}
+
+	.figure__caption {
+		padding-inline: 0.25rem;
+	}
+
+	/* The text column is centred in the viewport, so centring the figure on the
+	   viewport keeps it aligned with the column it grew out of. */
+	@media (min-width: 900px) {
+		.figure--wide {
+			width: min(1100px, calc(100vw - 5rem));
+			margin-left: 50%;
+			transform: translateX(-50%);
+		}
+	}
+</style>

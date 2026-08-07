@@ -1,0 +1,152 @@
+---
+/**
+ * A chain of steps with connectors. `pivot` marks the one step that carries the
+ * point — the repeated event, or the step where things go wrong. Emphasis is
+ * carried by border weight and colour, never by colour alone, so it survives
+ * dark mode and a monochrome print.
+ */
+
+import type { ChainStep } from './types';
+
+interface Props {
+	steps: ChainStep[];
+	/** `row` only makes sense up to about four steps. */
+	direction?: 'row' | 'column';
+	class?: string;
+}
+
+const { steps, direction = 'column', class: className } = Astro.props;
+---
+
+<ol class:list={['chain', `chain--${direction}`, className]}>
+	{
+		steps.map((step) => (
+			<li
+				class:list={['chain__step', { 'is-pivot': step.pivot, 'is-dashed': step.dashed }]}
+			>
+				<span class="chain__text">{step.text}</span>
+				{step.note && <span class="chain__note">{step.note}</span>}
+			</li>
+		))
+	}
+</ol>
+
+<style>
+	.chain {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+	}
+
+	.chain--column {
+		flex-direction: column;
+		gap: 1.75rem;
+	}
+
+	.chain--row {
+		flex-direction: column;
+		gap: 1.75rem;
+	}
+
+	@media (min-width: 700px) {
+		.chain--row {
+			flex-direction: row;
+			align-items: stretch;
+			gap: 2.25rem;
+		}
+	}
+
+	.chain__step {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		padding: 0.75rem 1rem;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-sm);
+		background: var(--bg);
+		font-size: 0.9375rem;
+		line-height: 1.45;
+	}
+
+	.chain--row .chain__step {
+		flex: 1;
+		justify-content: center;
+	}
+
+	.chain__note {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		line-height: 1.4;
+		letter-spacing: 0.02em;
+		color: var(--text-soft);
+	}
+
+	/* The step the prose is about: heavier edge plus signal colour. */
+	.chain__step.is-pivot {
+		border-width: 2px;
+		border-color: var(--signal);
+		color: var(--signal-text);
+		font-weight: 500;
+	}
+
+	.chain__step.is-pivot .chain__note {
+		color: var(--signal-text);
+	}
+
+	/* --- Connectors, drawn in the flex gap --- */
+	.chain__step + .chain__step::before,
+	.chain__step + .chain__step::after {
+		content: '';
+		position: absolute;
+		background: var(--hairline);
+	}
+
+	/* Column: a line rising out of the top edge, with a chevron at its foot. */
+	.chain--column .chain__step + .chain__step::before {
+		left: 1.75rem;
+		top: -1.75rem;
+		width: 1px;
+		height: 1.75rem;
+	}
+
+	.chain--column .chain__step + .chain__step::after {
+		left: calc(1.75rem - 3px);
+		top: -0.5rem;
+		width: 7px;
+		height: 7px;
+		background: none;
+		border-right: 1px solid var(--hairline);
+		border-bottom: 1px solid var(--hairline);
+		transform: rotate(45deg);
+	}
+
+	.chain--column .chain__step.is-dashed + .chain__step::before,
+	.chain--column .chain__step.is-dashed::before {
+		background: none;
+		border-left: 1px dashed var(--hairline);
+	}
+
+	/* Row: same idea, turned ninety degrees. Falls back to the column
+	   connectors below the breakpoint, where the chain stacks. */
+	@media (min-width: 700px) {
+		.chain--row .chain__step + .chain__step::before {
+			left: -2.25rem;
+			top: 50%;
+			width: 2.25rem;
+			height: 1px;
+		}
+
+		.chain--row .chain__step + .chain__step::after {
+			left: -0.6rem;
+			top: calc(50% - 3px);
+			width: 7px;
+			height: 7px;
+			background: none;
+			border-right: 1px solid var(--hairline);
+			border-top: 1px solid var(--hairline);
+			transform: rotate(45deg);
+		}
+	}
+</style>

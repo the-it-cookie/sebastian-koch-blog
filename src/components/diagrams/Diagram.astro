@@ -1,0 +1,54 @@
+---
+/**
+ * Frame for the article diagrams.
+ *
+ * These replace the Mermaid blocks the draft shipped with. They are built from
+ * real markup rather than a rendered image, which buys three things the design
+ * system needs: they inherit the theme in light and dark, they reflow on a
+ * phone instead of shrinking to nothing, and a screen reader walks the actual
+ * steps in order.
+ */
+
+interface Props {
+	/** Accessible name for the group — say what the diagram shows. */
+	label: string;
+	caption?: string;
+	class?: string;
+}
+
+const { label, caption, class: className } = Astro.props;
+---
+
+<figure class:list={['diagram', className]}>
+	<div class="diagram__body" role="group" aria-label={label}>
+		<slot />
+	</div>
+	{caption && <figcaption class="meta diagram__caption">{caption}</figcaption>}
+</figure>
+
+<style>
+	.diagram {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+
+	.diagram__body {
+		padding: 1.5rem;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
+		background: var(--surface);
+		overflow-x: auto;
+	}
+
+	@media (max-width: 480px) {
+		.diagram__body {
+			padding: 1rem;
+		}
+	}
+
+	.diagram__caption {
+		padding-inline: 0.25rem;
+	}
+</style>

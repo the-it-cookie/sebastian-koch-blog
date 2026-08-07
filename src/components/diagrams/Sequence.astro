@@ -1,0 +1,132 @@
+---
+/**
+ * Who did what, in order. Replaces a Mermaid sequence diagram, which on a phone
+ * shrinks to an unreadable smudge — here the ordering is the content, so it is
+ * an ordered list with the actors in a mono column.
+ *
+ * `rest` rows are the point of the section: the deliberate wait that makes the
+ * difference between the two sequences.
+ */
+import type { SequenceRow } from './types';
+
+interface Props {
+	rows: SequenceRow[];
+	class?: string;
+}
+
+const { rows, class: className } = Astro.props;
+
+// Only real steps get a number; a rest or a note is not a step.
+let step = 0;
+const numbered = rows.map((row) => {
+	const kind = row.kind ?? 'step';
+	return { ...row, kind, n: kind === 'step' ? ++step : null };
+});
+---
+
+<ol class:list={['seq', className]}>
+	{
+		numbered.map((row) => (
+			<li class:list={['seq__row', `seq__row--${row.kind}`, { 'is-pivot': row.pivot }]}>
+				{/* A number for real steps; a dash for the wait, an arrow for the
+				    outcome. Both fall inside the mono font's guaranteed range —
+				    a timer or pause glyph is not. */}
+				<span class="seq__n" aria-hidden="true">
+					{row.n ? String(row.n).padStart(2, '0') : row.kind === 'rest' ? '—' : '→'}
+				</span>
+				{row.from && (
+					<span class="seq__actors">
+						{row.from}
+						{row.to && <span class="seq__arrow"> &rarr; </span>}
+						{row.to}
+					</span>
+				)}
+				<span class="seq__text">{row.text}</span>
+			</li>
+		))
+	}
+</ol>
+
+<style>
+	.seq {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+
+	.seq__row {
+		display: grid;
+		grid-template-columns: 2rem 1fr;
+		gap: 0.25rem 0.75rem;
+		align-items: baseline;
+		padding: 0.5rem 0.6rem;
+		border-radius: var(--radius-sm);
+		font-size: 0.9375rem;
+		line-height: 1.45;
+	}
+
+	@media (min-width: 620px) {
+		.seq__row {
+			grid-template-columns: 2rem 11rem 1fr;
+		}
+	}
+
+	.seq__n {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.02em;
+		color: var(--text-soft);
+	}
+
+	.seq__actors {
+		font-family: var(--font-mono);
+		font-size: 0.75rem;
+		letter-spacing: 0.02em;
+		color: var(--calm-text);
+		white-space: nowrap;
+	}
+
+	.seq__arrow {
+		color: var(--text-soft);
+	}
+
+	.seq__text {
+		grid-column: 2 / -1;
+	}
+
+	@media (min-width: 620px) {
+		.seq__text {
+			grid-column: 3;
+		}
+	}
+
+	/* The wait. Visually a gap in the run of steps, because that is what it is. */
+	.seq__row--rest {
+		background: var(--calm);
+		color: var(--calm-text);
+	}
+
+	.seq__row--rest .seq__n,
+	.seq__row--rest .seq__actors {
+		color: var(--calm-text);
+	}
+
+	/* The outcome line. */
+	.seq__row--note {
+		background: var(--bg-band);
+		color: var(--text-soft);
+		font-size: 0.875rem;
+	}
+
+	.seq__row--note.is-pivot {
+		background: var(--signal-soft);
+		color: var(--signal-text);
+	}
+
+	.seq__row--note.is-pivot .seq__n {
+		color: var(--signal-text);
+	}
+</style>

@@ -34,6 +34,13 @@ const topics = [...counts.entries()]
 	.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
 	.slice(0, 8);
 
+// The "from the pass" button used to hardcode a topic. Topic pages only exist
+// for tags a published post actually carries, so hiding a draft silently turned
+// that link into a 404. Pick the first code-flavoured topic that exists today.
+const CODE_TOPICS = ['Code App', 'JavaScript', 'Power Automate', 'Power Platform'];
+const codeTopic = CODE_TOPICS.find((tag) => counts.has(tag));
+const codeHref = codeTopic ? `/tags/${slugifyTag(codeTopic)}/` : '/blog';
+
 const SNIPPET = `# Count opt-ins per purpose before a campaign goes out
 $purposes = Get-CrmRecords -EntityLogicalName msdynmkt_purpose \`
   -Fields msdynmkt_name, msdynmkt_purposeid
@@ -156,7 +163,7 @@ foreach ($purpose in $purposes.CrmRecords) {
 					a custom API — because that is where the awkward requirements actually get solved.
 					Recipes here show both halves, not just the clickable one.
 				</p>
-				<Button variant="secondary" href="/tags/power-automate/">Recipes with code in them</Button>
+				<Button variant="secondary" href={codeHref}>Recipes with code in them</Button>
 			</div>
 
 			<div class="pass__code">

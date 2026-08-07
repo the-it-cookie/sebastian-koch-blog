@@ -31,3 +31,9 @@ pnpm-debug.log*
 # not part of the site itself (needed assets are copied into src/assets/)
 /Microsoft und Power Apps Branding/
 /pictures/
+
+# article drafts and RAW screenshots before anonymisation.
+# This repo is public: the originals still contain identifying details that are
+# cropped or redacted on the way into src/assets/. They must never be committed,
+# because git history would keep them even after a later deletion.
+/article/

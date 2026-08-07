@@ -1,0 +1,85 @@
+---
+/**
+ * Two chains side by side, for comparing a path that works against one that
+ * does not. Below the breakpoint they stack, which is the honest reading order
+ * anyway: read A, then read B.
+ */
+import FlowChain from './FlowChain.astro';
+import type { ChainStep } from './types';
+
+interface Lane {
+	label: string;
+	/** Short verdict printed under the lane heading. */
+	outcome?: string;
+	tone?: 'ok' | 'fail';
+	steps: ChainStep[];
+}
+
+interface Props {
+	lanes: Lane[];
+	class?: string;
+}
+
+const { lanes, class: className } = Astro.props;
+---
+
+<div class:list={['lanes', className]}>
+	{
+		lanes.map((lane) => (
+			<section class:list={['lane', `lane--${lane.tone ?? 'ok'}`]}>
+				<header class="lane__head">
+					<p class="label lane__label">{lane.label}</p>
+					{lane.outcome && <p class="lane__outcome">{lane.outcome}</p>}
+				</header>
+				<FlowChain steps={lane.steps} direction="column" />
+			</section>
+		))
+	}
+</div>
+
+<style>
+	.lanes {
+		display: grid;
+		grid-template-columns: 1fr;
+		gap: 2rem;
+		/* Each lane is only as tall as its own steps — stretching the shorter
+		   one to match leaves a large empty block that reads as missing content. */
+		align-items: start;
+	}
+
+	@media (min-width: 820px) {
+		.lanes {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 2rem;
+		}
+	}
+
+	.lane {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+		padding: 1.25rem;
+		border-radius: var(--radius-md);
+		background: var(--bg-band);
+	}
+
+	.lane__head {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+
+	.lane--ok .lane__label {
+		color: var(--calm-text);
+	}
+
+	.lane--fail .lane__label {
+		color: var(--signal-text);
+	}
+
+	.lane__outcome {
+		font-size: 0.9375rem;
+		line-height: 1.45;
+		color: var(--text-soft);
+	}
+</style>

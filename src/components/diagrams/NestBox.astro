@@ -1,0 +1,86 @@
+---
+/**
+ * Two nested boxes, each carrying one attribute and one note about how that
+ * attribute is maintained. The nesting is the argument: same value, two levels,
+ * two completely different update mechanisms.
+ */
+
+interface Level {
+	title: string;
+	attr: string;
+	note: string;
+	/** Marks the level that goes stale. */
+	stale?: boolean;
+}
+
+interface Props {
+	outer: Level;
+	inner: Level;
+	class?: string;
+}
+
+const { outer, inner, class: className } = Astro.props;
+---
+
+<div class:list={['nest', className]}>
+	<section class:list={['nest__level', 'nest__level--outer', { 'is-stale': outer.stale }]}>
+		<p class="label nest__title">{outer.title}</p>
+		<code class="nest__attr">{outer.attr}</code>
+		<p class="nest__note">{outer.note}</p>
+
+		<section class:list={['nest__level', 'nest__level--inner', { 'is-stale': inner.stale }]}>
+			<p class="label nest__title">{inner.title}</p>
+			<code class="nest__attr">{inner.attr}</code>
+			<p class="nest__note">{inner.note}</p>
+		</section>
+	</section>
+</div>
+
+<style>
+	.nest__level {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		padding: 1.25rem;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-md);
+	}
+
+	.nest__level--outer {
+		background: var(--bg-band);
+	}
+
+	.nest__level--inner {
+		margin-top: 0.5rem;
+		background: var(--bg);
+	}
+
+	.nest__attr {
+		align-self: flex-start;
+		font-family: var(--font-mono);
+		font-size: 0.8125rem;
+		line-height: 1.5;
+		padding: 0.2rem 0.5rem;
+		border-radius: var(--radius-sm);
+		background: var(--surface);
+		border: 1px solid var(--hairline);
+		max-width: 100%;
+		overflow-wrap: anywhere;
+	}
+
+	.nest__note {
+		font-size: 0.875rem;
+		line-height: 1.45;
+		color: var(--text-soft);
+	}
+
+	/* The level that is written once and never refreshed. */
+	.nest__level.is-stale {
+		border-width: 2px;
+		border-color: var(--signal);
+	}
+
+	.nest__level.is-stale > .nest__note {
+		color: var(--signal-text);
+	}
+</style>
