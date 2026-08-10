@@ -75,12 +75,15 @@ const { variant = 'full', class: className } = Astro.props;
 		position: relative;
 	}
 
+	/* Sized in em so both variants scale with the lettering. Large enough that the
+	   hat still reads as a hat — the brim and the three puffs need the room — and
+	   the lower `bottom` keeps it sitting on the ı rather than floating off it. */
 	.wordmark__toque {
 		position: absolute;
 		left: 50%;
-		bottom: 0.72em;
-		width: 1.05em;
-		height: 0.84em;
+		bottom: 0.6em;
+		width: 1.45em;
+		height: 1.16em;
 		transform: translateX(-50%);
 		color: var(--signal);
 		overflow: visible;
