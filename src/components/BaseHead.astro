@@ -62,8 +62,15 @@ const articleJsonLd =
 <!-- Global Metadata -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- Raster first, scalable last: a browser that understands both honours the
+     later declaration, so the SVG toque wins where it can and the .ico (16/32/48
+     PNG entries of the same drawing) covers everything else. -->
+<link rel="icon" href="/favicon.ico" sizes="32x32" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="icon" href="/favicon.ico" />
+<!-- iOS ignores SVG here and fills transparency with black, so the home-screen
+     icon is a flat 180px PNG on the paper ground, with the toque inside the area
+     iOS's rounded mask leaves alone. -->
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 <link
 	rel="alternate"
