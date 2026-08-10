@@ -379,22 +379,57 @@ const isActive = (href: string) =>
 
 <script>
 	const header = document.getElementById('site-header');
+	const topRow = header?.querySelector<HTMLElement>('.header-top__inner');
 	const menu = document.getElementById('mobile-menu') as HTMLDialogElement | null;
 	const openBtn = document.querySelector<HTMLButtonElement>('[data-menu-open]');
 
-	// Sticky condense (§6). rAF-throttled so the scroll handler never does
-	// layout work more than once a frame.
+	/**
+	 * Sticky condense (§6).
+	 *
+	 * Collapsing row 1 shortens the document, and the browser answers that by
+	 * pulling scrollY down by row 1's height — scroll anchoring keeps the content
+	 * visually put, and near the page end the scroll maximum clamps as well. With
+	 * one threshold that correction lands back *below* it, so the header expands,
+	 * the correction reverses, and the band shivers between the two states.
+	 *
+	 * Two thresholds more than a row-height apart make each state stable against
+	 * its own correction (and against trackpad jitter around the boundary).
+	 */
+	const EXPAND_AT = 32;
+	let condenseAt = 120;
+
+	// Row 1 keeps its natural height even while collapsed — the grid row is 0fr
+	// and .header-top clips it — so this measures the same in both states.
+	const measure = () => {
+		condenseAt = Math.max(120, (topRow?.offsetHeight ?? 0) + EXPAND_AT * 2);
+	};
+
+	const sync = () => {
+		const condensed = header?.classList.contains('is-condensed') ?? false;
+		const y = window.scrollY;
+		if (condensed ? y < EXPAND_AT : y > condenseAt) {
+			header?.classList.toggle('is-condensed', !condensed);
+		}
+	};
+
+	// rAF-throttled so the scroll handler never does layout work more than once
+	// a frame.
 	let ticking = false;
 	const onScroll = () => {
 		if (ticking) return;
 		ticking = true;
 		requestAnimationFrame(() => {
-			header?.classList.toggle('is-condensed', window.scrollY > 120);
+			sync();
 			ticking = false;
 		});
 	};
 	window.addEventListener('scroll', onScroll, { passive: true });
-	onScroll();
+	window.addEventListener('resize', () => {
+		measure();
+		sync();
+	});
+	measure();
+	sync();
 
 	openBtn?.addEventListener('click', () => {
 		menu?.showModal();
