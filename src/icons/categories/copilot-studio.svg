@@ -1,10 +1,13 @@
-<!-- The sous-chef's hat, with a speech bubble where the orders come from. -->
+<!-- The sous-chef's hat, with a speech bubble where the orders come from.
+     <g data-detail> holds what CategoryIcon drops below 24px. -->
 <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
 	<path d="M7 14.9C4.6 14.3 3.1 12 3.6 9.7 4.1 7.5 6.3 6 8.6 6.4c.9-2.3 3.3-3.8 5.9-3.5 2.5.2 4.5 1.9 5 4.1 2.4-.2 4.5 1.6 4.7 4 .1 1.7-.8 3.3-2.3 4"/>
 	<path d="M7.1 14.8c.3 2.4.4 4.8.3 7.2 2.6.5 5.2.6 7.8.4"/>
-	<path d="M21.9 15c-.1 1-.2 2-.2 3"/>
 	<path d="M19.4 18.1h7.9c1.1 0 2 .9 2 2v4.6c0 1.1-.9 2-2 2h-3.9l-3.6 3.1.4-3.1h-.8c-1.1 0-2-.9-2-2v-4.6c0-1.1.9-2 2-2Z"/>
-	<path d="M21.9 22.4h.02"/>
-	<path d="M24.3 22.4h.02"/>
-	<path d="M26.7 22.4h.02"/>
+	<g data-detail="">
+		<path d="M21.9 15c-.1 1-.2 2-.2 3"/>
+		<path d="M21.9 22.4h.02"/>
+		<path d="M24.3 22.4h.02"/>
+		<path d="M26.7 22.4h.02"/>
+	</g>
 </svg>

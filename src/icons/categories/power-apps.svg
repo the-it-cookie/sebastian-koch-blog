@@ -1,7 +1,10 @@
-<!-- Chef's hat whose pleats are form fields. -->
+<!-- Chef's hat whose pleats are form fields.
+     <g data-detail> holds what CategoryIcon drops below 24px. -->
 <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
 	<path d="M8.4 16.2C5.6 15.8 3.7 13.4 4.1 10.8 4.5 8.3 6.9 6.6 9.5 7.1c.9-2.6 3.6-4.3 6.6-4 2.8.3 5.1 2.2 5.6 4.6 2.7-.3 5.2 1.6 5.5 4.3.3 2.5-1.4 4.8-4 5.3"/>
 	<path d="M8.5 16.1c.4 3.5.5 7 .3 10.5 4.7.8 9.5.8 14.2 0-.3-3.5-.2-7 .2-10.5"/>
-	<path d="M12 19.6h8.1c.5 0 .9.4.9.9s-.4.9-.9.9H12c-.5 0-.9-.4-.9-.9s.4-.9.9-.9Z"/>
-	<path d="M12 23.6h5.2c.5 0 .9.4.9.9s-.4.9-.9.9H12c-.5 0-.9-.4-.9-.9s.4-.9.9-.9Z"/>
+	<g data-detail="">
+		<path d="M12 19.6h8.1c.5 0 .9.4.9.9s-.4.9-.9.9H12c-.5 0-.9-.4-.9-.9s.4-.9.9-.9Z"/>
+		<path d="M12 23.6h5.2c.5 0 .9.4.9.9s-.4.9-.9.9H12c-.5 0-.9-.4-.9-.9s.4-.9.9-.9Z"/>
+	</g>
 </svg>

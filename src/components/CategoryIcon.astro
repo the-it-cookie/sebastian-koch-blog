@@ -12,6 +12,21 @@ interface Props {
 	class?: string;
 }
 
+/**
+ * Below this the fine detail in each drawing — the pleats in the chef's hat, the
+ * mesh in the sieve, the record under the cloche — closes into a blob, so the
+ * `<g data-detail>` group is dropped and only the silhouette survives.
+ */
+const SIMPLIFY_BELOW = 24;
+
+/**
+ * Stroke width in viewBox units. The drawings carry 1.4 on a 32-unit grid, which
+ * is a 0.7px hairline once the icon is rendered at chip size; this keeps the
+ * painted stroke at roughly 1.1px on the way down without fattening the large
+ * sizes, where 1.4 is the intended weight.
+ */
+const strokeWidth = (size: number) => Math.round(Math.max(1.4, 36 / size) * 100) / 100;
+
 const icons = import.meta.glob<string>('../icons/categories/*.svg', {
 	query: '?raw',
 	import: 'default',
@@ -22,12 +37,16 @@ const { topic, size = 32, class: className } = Astro.props;
 
 const key = topicIcon(topic);
 const raw = icons[`../icons/categories/${key}.svg`] ?? icons['../icons/categories/default.svg'];
-const svg = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
+
+let svg = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
+if (size < SIMPLIFY_BELOW) {
+	svg = svg.replace(/\s*<g data-detail[^>]*>[\s\S]*?<\/g>/g, '');
+}
 ---
 
 <span
 	class:list={['category-icon', className]}
-	style={`--icon-size:${size}px`}
+	style={`--icon-size:${size}px;--icon-stroke:${strokeWidth(size)}`}
 	aria-hidden="true"
 	set:html={svg}
 />
@@ -41,9 +60,12 @@ const svg = raw.replace(/<!--[\s\S]*?-->/g, '').trim();
 		color: inherit;
 	}
 
+	/* A CSS declaration outranks the stroke-width presentation attribute the
+	   drawings carry, and inherits from the <svg> down to every path inside. */
 	.category-icon :global(svg) {
 		width: 100%;
 		height: 100%;
 		display: block;
+		stroke-width: var(--icon-stroke);
 	}
 </style>
