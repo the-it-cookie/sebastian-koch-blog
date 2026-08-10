@@ -41,18 +41,28 @@ const CODE_TOPICS = ['Code App', 'JavaScript', 'Power Automate', 'Power Platform
 const codeTopic = CODE_TOPICS.find((tag) => counts.has(tag));
 const codeHref = codeTopic ? `/tags/${slugifyTag(codeTopic)}/` : '/blog';
 
-const SNIPPET = `# Count opt-ins per purpose before a campaign goes out
-$purposes = Get-CrmRecords -EntityLogicalName msdynmkt_purpose \`
-  -Fields msdynmkt_name, msdynmkt_purposeid
+const SNIPPET = `// Method: cream the purposes first, then fold in the
+// topics. Add both at once and the mixture splits.
 
-foreach ($purpose in $purposes.CrmRecords) {
-  $optIns = Get-CrmRecords \`
-    -EntityLogicalName msdynmkt_contactpointconsent3 \`
-    -FilterAttribute msdynmkt_purposeid \`
-    -FilterOperator eq \`
-    -FilterValue $purpose.msdynmkt_purposeid
+const REST = 150;      // ms. not in any recipe book
 
-  "{0,-34} {1,5} opt-ins" -f $purpose.msdynmkt_name, $optIns.Count
+function prefill(consents) {
+  const blocks = document.querySelectorAll(".consentBlock");
+
+  creamPurposes(blocks, consents);
+  setTimeout(() => foldInTopics(blocks, consents), REST);
+}
+
+function isTopic(block) {
+  // looks like a value, is a string
+  const id = block.dataset.topicid;
+  return id && id !== "undefined";
+}
+
+function serve(cb) {   // plating is not cooking
+  cb.checked = true;
+  for (const e of ["input", "change"])
+    cb.dispatchEvent(new Event(e, { bubbles: true }));
 }`;
 ---
 
@@ -167,7 +177,7 @@ foreach ($purpose in $purposes.CrmRecords) {
 			</div>
 
 			<div class="pass__code">
-				<CodeBlock code={SNIPPET} lang="powershell" filename="count-optins.ps1" />
+				<CodeBlock code={SNIPPET} lang="javascript" filename="mise-en-place.js" />
 			</div>
 		</div>
 	</section>
